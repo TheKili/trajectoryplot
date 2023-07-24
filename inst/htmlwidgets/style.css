@@ -1,0 +1,12 @@
+.container{
+  display: block;
+  float:left;
+  position:relative;
+}
+
+.sip .html-widget {
+  display: flex;
+  flex-wrap: nowrap;
+  overflow-x: scroll;
+
+}

@@ -7,7 +7,7 @@
 seqplot <- function(seqdata, group = NULL, type ="i", main = NULL, cpal = NULL, missing.color = NULL, ylab=NULL, yaxis = TRUE,
                     axes = "all", xtlab = NULL, cex.axis = 1, with.legend = "auto", ltext = NULL, cex.legend = 1, use.layout = (!is.null(group) | with.legend != FALSE), legend.prop = NA,
                     rows = NA, cols = NA, tooltip = list(), width = NULL, height = NULL, barWidth = NULL, barHeight = NULL, margins = NULL,  xlabel = NULL, title, cex.plot, withlegend,
-                    paddingInnerX = 0, paddingInnerY = 0, sliderX = list( visible = FALSE, range = c(0,1)), sortv= NULL, fisheye = TRUE, ...){
+                    paddingInnerX = 0, paddingInnerY = 0, sliderX = list( visible = FALSE, range = c(0,1)), sortv= NULL, fisheye = NULL, ...){
 
 
 
@@ -189,7 +189,7 @@ seqplot <- function(seqdata, group = NULL, type ="i", main = NULL, cpal = NULL, 
  htmlwidgets::createWidget(
     name = 'sip',
     nlist,
-    width = width,
+    width = "100%",
     height = height,
     package = 'activeseqIplot',
     #elementId = NULL
