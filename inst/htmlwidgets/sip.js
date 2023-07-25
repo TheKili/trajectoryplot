@@ -11,7 +11,6 @@ HTMLWidgets.widget({
 
     return {
       test:function(data){
-        console.log(data)
         chart.tooltip(data)
         return chart
       },
@@ -28,14 +27,19 @@ HTMLWidgets.widget({
        chart = drawChart()
 
 
+      let testdata = [...data]
+
+      for(const key in config){
+        testdata[key] = config[key]
+      }
+
 
        let chartContainer = d3.select(el)
           .selectAll("div")
-          .data([data,data])
+          .data([ data])
           .join("div")
             .attr("class","container")
             .style("width","800px")
-
             .style("display","block")
             .style("float","left")
             .style("position", "relative")
@@ -67,12 +71,11 @@ HTMLWidgets.widget({
 
  function drawChart(){
 
-        let data;
         let updateY = [];
         let createTooltip = [];
         let legend;
         let tooltip;
-        let tooltipMove = [];
+
         let sort;
         let sortv;
         let createDropdown = [];
@@ -82,29 +85,30 @@ HTMLWidgets.widget({
         let d= 120,
         a = 0,
         boundaries = 100;
-        let y;
         let enableFisheye=[];
+        let mouseMove = [];
         let selectedIds = [];
-        let yCoord;
+        let selected = [];
+        let markers = ["1167"]
         //integrate some sort of if condition that
         // 1) returns a legend and an emptiy container grid
         // 2) returns the svg for each cluster
         function chart (selection) {
 
             selection.each(function(data,i){
-              const mousemove = function(d) {
 
-                yCoord =d3.pointer(d, this)[1];
+              const fisheyeMove = function(d) {
+                const yCoord =d3.pointer(d, this)[1];
                 const yFish = fisheye_scale(yCoord);
 
-                seq.attr("transform", (d,i) => `translate(0,  ${yFish(d.y).y})`)
-                seq.selectAll("rect").attr("height", function(d){return d.y = yFish(this.parentNode.__data__.y).height
+                seq.attr("transform", (d,i) => `translate(0,  ${yFish(y(d.id)).y})`)
+                seq.selectAll("rect").attr("height", function(d){return yFish(y(this.parentNode.__data__.id)).height
               })
               }
 
-              const mouseout = function(d) {
+              const fisheyeOut = function(d) {
                 seq.selectAll("rect").attr("height", barHeight)
-                seq.attr("transform", (d,i) => `translate(0,  ${d.y} ) `)
+                seq.attr("transform", (d,i) => `translate(0,  ${y(d.id)} ) `)
               }
               const colorScale = d3.scaleOrdinal()
                                 .domain(data.alphabet)
@@ -120,7 +124,7 @@ HTMLWidgets.widget({
               height = barHeight * data.length + marginsBottom + marginsTop
               width = barWidth * (data.names.length)  + marginsLeft + marginsRight
               //declaring scale functions
-              y = d3.scaleBand()
+              const y = d3.scaleBand()
                           .paddingInner(data.paddingInnerY)
                           .domain(rownames)
                           .range([0, barHeight * (data.length)])
@@ -172,17 +176,33 @@ HTMLWidgets.widget({
                     .append("svg")
                     .attr("viewBox", [0, 0, width, height ]);
 
+              svg.append("style")
+                    .text(`g.hidden > rect { fill: #000; fill-opacity: 0.4;}
+                    line.hidden{opacity:0;}
+                    line.show {opacity:1;}
+                    g.hidden > line {opacity:1;}`);
+
+
               const xAx = svg.append("g")
                             xAx.call(xAxis)
 
               const canvas = svg.append("g")
                           .attr("transform", `translate(${marginsLeft}, ${marginsTop})` )
 
-
               const seq =  canvas.selectAll("g")
                             .data(data.map( (d,i) => Object.assign(d, {id :rownames[i], index: i})) , (d,i) => rownames[i])
                             .join("g")
-                                .attr("transform", (d,i) => `translate(0,  ${ d.y=y(d.id)}) `)
+                                .attr("transform", (d,i) => `translate(0,  ${y(d.id)}) `)
+
+              const marks = seq
+                            .append("line")
+                              .attr("x1", -12)
+                              .attr("x2", -3)
+                              .attr("y1",0)
+                              .attr("y2",0)
+                              .attr("stroke","#888")
+                              .classed("hidden",true)
+                              .classed("show", d => markers.includes(d.id))
 
               const paths = seq.selectAll("rect")
                                 .data( (d,i) => d)
@@ -222,25 +242,29 @@ HTMLWidgets.widget({
               };
 
               updateY = updateY.concat(function() {
-                y.domain(sort)
-                                      ;
+                const sortedY = y;
+                sortedY.domain(sort);
                   const t = svg.transition()
                     .duration(750);
-
                   seq.transition(t)
-                    .delay((d,i) => i * 2)
-                    .attrTween("transform", (d,j) => {
-                        const i = d3.interpolateNumber(d.y, y(d.id));
-                      return t =>  `translate(${0}, ${d.y = i(t)})`;}
+                    .delay((d,z ) => z * 2)
+                    .attrTween("transform", function(d,j)  {
+                        const x = d3.interpolateNumber(y(d.id), sortedY(d.id));
+                      return t =>  `translate(${0},  ${x(t)})`;}
                     );
+
+
                 });
 
 
               createTooltip = createTooltip.concat(function(){
 
-                tooltipMove = tooltipMove.concat(function(d){
-                  const {left, right,top} = this.getBoundingClientRect();
+                 mouseMove = mouseMove.concat( function () {
+                 seq.classed("hidden", d => d.id == this.parentNode.__data__.id )})
 
+                const tooltipMove = function(d){
+
+                  const {left, right,top} = this.getBoundingClientRect();
                   const {left: parentLeft, top : parentTop} = this.parentNode.parentNode.parentNode.getBoundingClientRect()
                   tltip.style("left", `${right - parentLeft}px`)
                     .style("top", `${top -parentTop}px`)
@@ -251,13 +275,14 @@ HTMLWidgets.widget({
                   let baseInfo =   `state: ${this.__data__}, id: ${this.parentNode.__data__.id}`
 
                   let customInfo = "";
-                  if (tooltip) customInfo = tooltip?.map(d => `, ${d.label}: ${d.var[this.parentNode.__data__.index]}`).join("")
+                  if (tooltip) customInfo = tooltip.map(d => `, ${d.label}: ${d.var[this.parentNode.__data__.index]}`).join("")
                   tltipText.html(`${baseInfo}${customInfo}`)
-                  })
+                  }
 
                 const tooltipOut = function(){
                   tltip.style("opacity",0)
                 }
+
                 const tltip = container
                 .append("div")
                   .style("position", "absolute")
@@ -274,8 +299,8 @@ HTMLWidgets.widget({
                   .style("position","relative")
                   .style("box-sizing","border-box")
 
-                paths.on("mousemove", function(e){  tooltipMove.map(d => d.bind(this)(e))})
-                //paths.on("mouseout", tooltipOut)
+                paths.on("mousemove", function(e){  tooltipMove.bind(this)(e); mouseMove.map( d =>  { d.bind(this)(e)} )})
+                  paths.on("mouseout", tooltipOut)
                 })
 
               createDropdown = createDropdown.concat(function(){
@@ -299,9 +324,8 @@ HTMLWidgets.widget({
               })
 
               enableFisheye = enableFisheye.concat(function(){
-                canvas.on("mouseleave", mouseout)
-                       .on("mousemove", fisheye ? mousemove :"")
-
+                canvas.on("mouseleave", fisheyeOut)
+                       .on("mousemove",  fisheyeMove)
                 })
 
             });
@@ -354,7 +378,7 @@ HTMLWidgets.widget({
                   if (typeof createDropdown[i] === 'function') createDropdown[i]();
                 }
 
-              if(typeof createDropdown === 'function' && !value.nodropdown) console.log
+              if(typeof createDropdown === 'function' && !value.nodropdown)
 
               for(let i in createDropdown){
                 if (typeof updateY[i] === 'function') updateY[i]()
