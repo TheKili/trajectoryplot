@@ -2,7 +2,7 @@ HTMLWidgets.widget({
   name: 'sip',
   type: 'output',
 
-  factory: function(el, width = 400, height = 800) {
+  factory: function(el, width ,height) {
 
     // TODO: define shared variables for this instance
 
@@ -10,38 +10,24 @@ HTMLWidgets.widget({
 
 
     return {
-      test:function(data){
-        chart.tooltip(data)
-        return chart
-      },
+
       renderValue: function(input) {
         // TODO: code to render the widget, e.g.
       //prepare data to normal format
-      let config = input[1]
-      let group = (config.group || [null])
-      let data  = input[0]
+      const config = input[0][1]
 
-      for(const key in config){
-        data[key] = config[key]
-      }
+      let data = input.map( d =>  Object.assign(d[0], d[1]))
        chart = drawChart()
-               .mark(config.marks)
-
-
-
-      let testdata = [...data]
-
-      for(const key in config){
-        testdata[key] = config[key]
-      }
-
-
        let chartContainer = d3.select(el)
+        .append("div")
+          .style("display", "flex")
+          .style("flex-wrap", config.flexwrap)
+          .style("flex-shrink", "0")
           .selectAll("div")
-          .data([ data, testdata])
+          .data(data)
           .join("div")
             .attr("class","container")
-            .style("width","800px")
+            .style("min-width", config.width)
             .style("display","block")
             .style("float","left")
             .style("position", "relative")
@@ -49,23 +35,25 @@ HTMLWidgets.widget({
 
 
       chartContainer.call(chart)
-      console.log(config)
-      chart.fisheye(config.fisheye)
-            .sortv(config.sortv)
-            .tooltip(config.tooltip)
-            .highlight(config.highlight)
+      if(config.fisheye && config.fisheye != [] )
+        chart.fisheye(config.fisheye)
 
-      /*chart.tooltip(config.tooltip)
-              .sortv(config.sortv)
-              */
+      if(config.sortv && config.sortv != [] )
+        chart.sortv(config.sortv)
+
+
+      if(config.tooltip && config.tooltip != [] )
+          chart.tooltip(config.tooltip)
+
+      if(config.highlight && config.highlight != [] )
+          chart.highlight(config.highlight)
+      if(config.legend)
+          chart.legend(config.legend)
+
         return chart
       }
 
-      ,resize: function(width, height) {
 
-        // TODO: code to re-render the widget with a new size
-
-      }
 
     };
   }
@@ -77,6 +65,7 @@ HTMLWidgets.widget({
         let updateY = [];
         let highlightY = [];
         let createTooltip = [];
+        let createLegend = []
         let legend;
         let tooltip;
 
@@ -118,7 +107,7 @@ HTMLWidgets.widget({
                 seq.attr("transform", (d,i) => `translate(0,  ${y(d.id)} ) `)
               }
               const colorScale = d3.scaleOrdinal()
-                                .domain(data.alphabet)
+                                .domain( data.alphabet)
                                 .range(data.cpal)
                                 .unknown(data["missing.color"]);
               const rownames =  data["row.names"]
@@ -128,8 +117,8 @@ HTMLWidgets.widget({
 
               const barHeight = data.barHeight;
               const barWidth =  data.barWidth;
-              height = barHeight * data.length + marginsBottom + marginsTop
-              width = barWidth * (data.names.length)  + marginsLeft + marginsRight
+              const height = barHeight * data.length + marginsBottom + marginsTop
+              const width = barWidth * (data.names.length)  + marginsLeft + marginsRight
               //declaring scale functions
               const y = d3.scaleBand()
                           .paddingInner(data.paddingInnerY)
@@ -137,7 +126,7 @@ HTMLWidgets.widget({
                           .range([0, barHeight * (data.length)])
 
               const x = d3.scaleBand()
-                          .domain( [...Array(data.names.length).keys()]  )
+                          .domain( [...Array(data.names.length).keys()])
                           .range([ 0, width - marginsLeft - marginsRight ])
                           .paddingInner(data.paddingInnerX)
               //declaring tool tip function
@@ -150,34 +139,6 @@ HTMLWidgets.widget({
                               .tickFormat((d,i) =>   xLabel[i])
                           )
                     .call(g => g.select(".domain").remove())
-
-              const legend = container
-                    .insert("div","svg")
-                      .style("max-width", width)
-                      .style("display","flex")
-                      .style("flex-flow","row wrap")
-                      .style("flex-grow",1)
-                      .style("justify-content","center")
-                      .style("align-content","space-between")
-                      .style("gap","10px")
-                      .attr("class","legend")
-
-              const legendEnries =  legend.selectAll("div")
-                                  .data(d3.zip(colorScale.range(), colorScale.domain()))
-                                    .join("div")
-                                    .style("display","flex")
-                                    .style("gap","10px")
-
-
-
-                    legendEnries.append("div")
-                                      .style("width", "15px")
-                                      .style("height", "15px")
-                                      .style("background-color", d => d[0])
-
-                    legendEnries.append("div")
-                                      .text(d => d[1])
-
 
               const svg = container
                     .append("svg")
@@ -198,7 +159,7 @@ HTMLWidgets.widget({
                           .attr("transform", `translate(${marginsLeft}, ${marginsTop})` )
 
               const seq =  canvas.selectAll("g")
-                            .data(data.map( (d,i) => Object.assign(d, {id :rownames[i], index: i})) , (d,i) => rownames[i])
+                            .data(data.map( (d,i) => Object.assign(Object.values(d), {id :rownames[i], index: i})) , (d,i) => rownames[i])
                             .join("g")
                                 .attr("transform", (d,i) => `translate(0,  ${d.y=y(d.id)}) `)
 
@@ -217,7 +178,7 @@ HTMLWidgets.widget({
                                 .join("rect")
                                   .attr("width", x.bandwidth())
                                   .attr("height", y.bandwidth())
-                                  .style("fill", d => colorScale(String(d)))
+                                  .style("fill", d => colorScale(d))
                                   .attr("x", (d,i) =>  x(i))
                                   .attr("y", 0)
 
@@ -267,8 +228,36 @@ HTMLWidgets.widget({
 
                 });
 
+              createLegend = createLegend.concat(function(){
+                const legend = container
+                .insert("div","svg")
+                  .style("display","flex")
+                  .style("flex-flow","row wrap")
+                  .style("flex-grow",1)
+                  .style("justify-content","center")
+                  .style("align-content","space-between")
+                  .style("gap","10px")
+                  .attr("class","legend")
 
+                const legendEnries =  legend.selectAll("div")
+                              .data(d3.zip(colorScale.range(), colorScale.domain()))
+                                .join("div")
+                                .style("display","flex")
+                                .style("gap","10px")
+
+
+
+                legendEnries.append("div")
+                                  .style("width", "15px")
+                                  .style("height", "15px")
+                                  .style("background-color", d => d[0])
+
+                legendEnries.append("div")
+                                  .text(d => d[1])
+
+              })
               createTooltip = createTooltip.concat(function(){
+
 
                  mouseMove = mouseMove.concat( function () {
                  seq.classed("hidden", d => d.id == this.parentNode.__data__.id )})
@@ -316,7 +305,7 @@ HTMLWidgets.widget({
 
               createDropdown = createDropdown.concat(function(){
                 const dropdown = container
-                  .insert("div",".legend")
+                  .insert("div", legend ? ".legend":"svg")
                     .attr("height", "20px")
                     .attr("width","30px")
 
@@ -369,20 +358,21 @@ HTMLWidgets.widget({
         };
 
         chart.legend = function(value) {
-          if (!arguments.length) return legend;
+          if (!arguments.length || value === null) return legend;
               legend = value;
+          for(let i in createLegend){
+            if (typeof createLegend[i] === 'function') createLegend[i]();
+            }
           return chart;
         };
 
         //set tooltip -> müsste ne true/false bedingung sein
         chart.tooltip = function(value) {
-
           if (!arguments.length) return tooltip;
               tooltip = value;
-        for(let i in createTooltip){
-          console.log("ooltip")
+          for(let i in createTooltip){
           if (typeof createTooltip[i] === 'function') createTooltip[i]();
-        }
+          }
           return chart;
         };
 
@@ -415,8 +405,6 @@ HTMLWidgets.widget({
               for(let i in createDropdown){
                   if (typeof createDropdown[i] === 'function') createDropdown[i]();
                 }
-
-
               for(let i in updateY){
                 if (typeof updateY[i] === 'function') updateY[i]()
               }
