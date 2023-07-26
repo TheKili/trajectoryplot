@@ -7,7 +7,7 @@
 seqplot <- function(seqdata, group = NULL, type ="i", main = NULL, cpal = NULL, missing.color = NULL, ylab=NULL, yaxis = TRUE,
                     axes = "all", xtlab = NULL, cex.axis = 1, with.legend = "auto", ltext = NULL, cex.legend = 1, use.layout = (!is.null(group) | with.legend != FALSE), legend.prop = NA,
                     rows = NA, cols = NA, tooltip = list(), width = NULL, height = NULL, barWidth = NULL, barHeight = NULL, margins = NULL,  xlabel = NULL, title, cex.plot, withlegend,
-                    paddingInnerX = 0, paddingInnerY = 0, sliderX = list( visible = FALSE, range = c(0,1)), sortv= NULL, fisheye = NULL, ...){
+                    paddingInnerX = 0, paddingInnerY = 0, sliderX = list( visible = FALSE, range = c(0,1)), sortv= NULL, fisheye = NULL, marks = NULL, highlight = NULL, ...){
 
 
 
@@ -64,7 +64,7 @@ seqplot <- function(seqdata, group = NULL, type ="i", main = NULL, cpal = NULL, 
   plist <- list(names = names, row.names = row.names, xtstep = xtstep, cpal=cpal, missing.color=missing.color,
                  yaxis=yaxis, xtlab=xtlab, labels = labels, alphabet = alphabet,
                  barWidth = barWidth, barHeight = barHeight, xlabel = xlabel, group = levels(group),
-                 margins = margins, paddingInnerX = paddingInnerX, paddingInnerY = paddingInnerY, sliderX = sliderX, tooltip = tooltip, sortv = sortv, fisheye=fisheye )
+                 margins = margins, paddingInnerX = paddingInnerX, paddingInnerY = paddingInnerY, sliderX = sliderX, tooltip = tooltip, sortv = sortv, fisheye=fisheye, marks = marks, highlight = highlight )
 
 
 

@@ -25,6 +25,8 @@ HTMLWidgets.widget({
         data[key] = config[key]
       }
        chart = drawChart()
+               .mark(config.marks)
+
 
 
       let testdata = [...data]
@@ -36,7 +38,7 @@ HTMLWidgets.widget({
 
        let chartContainer = d3.select(el)
           .selectAll("div")
-          .data([ data])
+          .data([ data, testdata])
           .join("div")
             .attr("class","container")
             .style("width","800px")
@@ -47,10 +49,11 @@ HTMLWidgets.widget({
 
 
       chartContainer.call(chart)
-
+      console.log(config)
       chart.fisheye(config.fisheye)
             .sortv(config.sortv)
             .tooltip(config.tooltip)
+            .highlight(config.highlight)
 
       /*chart.tooltip(config.tooltip)
               .sortv(config.sortv)
@@ -72,13 +75,17 @@ HTMLWidgets.widget({
  function drawChart(){
 
         let updateY = [];
+        let highlightY = [];
         let createTooltip = [];
         let legend;
         let tooltip;
 
         let sort;
         let sortv;
+        let highlight;
         let createDropdown = [];
+        let createDropdownHighlight = [];
+
         let tltip;
         let fisheye;
         let canvas;
@@ -89,7 +96,7 @@ HTMLWidgets.widget({
         let mouseMove = [];
         let selectedIds = [];
         let selected = [];
-        let markers = ["1167"]
+        let markers = []
         //integrate some sort of if condition that
         // 1) returns a legend and an emptiy container grid
         // 2) returns the svg for each cluster
@@ -166,7 +173,7 @@ HTMLWidgets.widget({
                     legendEnries.append("div")
                                       .style("width", "15px")
                                       .style("height", "15px")
-                                      .style("background-color",d => d[0])
+                                      .style("background-color", d => d[0])
 
                     legendEnries.append("div")
                                       .text(d => d[1])
@@ -178,6 +185,7 @@ HTMLWidgets.widget({
 
               svg.append("style")
                     .text(`g.hidden > rect { fill: #000; fill-opacity: 0.4;}
+                    g.gray > rect {filter: grayscale(1)}
                     line.hidden{opacity:0;}
                     line.show {opacity:1;}
                     g.hidden > line {opacity:1;}`);
@@ -192,7 +200,7 @@ HTMLWidgets.widget({
               const seq =  canvas.selectAll("g")
                             .data(data.map( (d,i) => Object.assign(d, {id :rownames[i], index: i})) , (d,i) => rownames[i])
                             .join("g")
-                                .attr("transform", (d,i) => `translate(0,  ${y(d.id)}) `)
+                                .attr("transform", (d,i) => `translate(0,  ${d.y=y(d.id)}) `)
 
               const marks = seq
                             .append("line")
@@ -240,7 +248,10 @@ HTMLWidgets.widget({
 
                 return fisheye_function
               };
+              highlightY = highlightY.concat(function(){
+                seq.classed("gray", (d,i) => !highlight[i] )
 
+              })
               updateY = updateY.concat(function() {
                 const sortedY = y;
                 sortedY.domain(sort);
@@ -249,8 +260,8 @@ HTMLWidgets.widget({
                   seq.transition(t)
                     .delay((d,z ) => z * 2)
                     .attrTween("transform", function(d,j)  {
-                        const x = d3.interpolateNumber(y(d.id), sortedY(d.id));
-                      return t =>  `translate(${0},  ${x(t)})`;}
+                        const x = d3.interpolateNumber(d.y, sortedY(d.id));
+                      return t =>  `translate(${0},  ${d.y=x(t)})`;}
                     );
 
 
@@ -323,6 +334,26 @@ HTMLWidgets.widget({
 
               })
 
+              createDropdownHighlight = createDropdownHighlight.concat(function(){
+                const dropdown = container
+                  .insert("div",".legend")
+                    .attr("height", "20px")
+                    .attr("width","30px")
+
+                dropdown.append("label")
+                  .html("Hightlight according to: ")
+
+
+                dropdown
+                    .append("select")
+                    .on("change", e => {highlight = e.target.selectedOptions[0].__data__.var; highlightY[i]()})
+                    .selectAll("option")
+                    .data(highlight)
+                      .join("option")
+                      .html(d => d.label)
+
+              })
+
               enableFisheye = enableFisheye.concat(function(){
                 canvas.on("mouseleave", fisheyeOut)
                        .on("mousemove",  fisheyeMove)
@@ -355,6 +386,13 @@ HTMLWidgets.widget({
           return chart;
         };
 
+        chart.mark = function(value){
+
+          if (!arguments.length || value === null) return markers;
+          markers = value;
+          return chart;
+        }
+
         chart.fisheye = function(value){
 
           if (!arguments.length || value === null) return fisheye;
@@ -378,19 +416,25 @@ HTMLWidgets.widget({
                   if (typeof createDropdown[i] === 'function') createDropdown[i]();
                 }
 
-              if(typeof createDropdown === 'function' && !value.nodropdown)
 
-              for(let i in createDropdown){
+              for(let i in updateY){
                 if (typeof updateY[i] === 'function') updateY[i]()
               }
-
-
-
-
           return chart;
         };
 
+        chart.highlight = function(value) {
+          if(typeof value == 'object' && !value.nodropdown && !Array.isArray(value)){
+            highlight = [value];
+          }else {
+            highlight = value;}
 
+          for(let i in createDropdownHighlight){
+              if (typeof createDropdownHighlight[i] === 'function') createDropdownHighlight[i]();
+            }
+
+      return chart;
+    };
 
         return chart;
 
