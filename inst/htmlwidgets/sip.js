@@ -275,7 +275,8 @@ HTMLWidgets.widget({
                   let baseInfo =   `state: ${this.__data__}, id: ${this.parentNode.__data__.id}`
 
                   let customInfo = "";
-                  if (tooltip) customInfo = tooltip.map(d => `, ${d.label}: ${d.var[this.parentNode.__data__.index]}`).join("")
+
+                  if (typeof tooltip == "Object") customInfo = tooltip.map(d => `, ${d.label}: ${d.var[this.parentNode.__data__.index]}`).join("")
                   tltipText.html(`${baseInfo}${customInfo}`)
                   }
 
