@@ -18,18 +18,27 @@ biofam <- biofam[1:50, ]
 biofam.seq <- seqdef(biofam, var = c(10:25))
 
 ##creating two plots of the same data set
+
 seqaplot(list(biofam.seq,biofam.seq))
+
  ##including a tooltip with custom information
 ##creating multiple sort dropdowns
 ###creating the sorted variable first
+
 sort_year <- row.names(biofam)[order(biofam$birthyr, decreasing=TRUE)]
 sort_lang <- row.names(biofam)[order(biofam$plingu02, decreasing=TRUE)]
+
 ### passing it on to the sequence active plot
+
 seqaplot(biofam.seq, sortv = list( list( var=sort_year, label="Sort by year" ), list( var=sort_lang, label="Sort by Language" )))
+
 ## creating a highlight dropdown
 ### creating a var containing TRUE/FALSE values (boolean masking)
+
 protestants <- biofam$p02r01 == "Protestant or Reformed Church"
+
 ### passing it on to the sequence active plot
+
 seqaplot(biofam.seq, highlight = list( list( var=protestant, label="Highlight if protestant" ))
 
 ```
