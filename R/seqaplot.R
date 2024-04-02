@@ -43,7 +43,7 @@
 seqaplot <- function(seqdata, group = NULL, type ="i", main = NULL, cpal = NULL, missing.color = NULL, ylab=NULL, yaxis = TRUE,
                   axes = "all", xtlab = NULL, ltext = NULL, legend = NULL, legend.prop = NA, flexwrap = "wrap",
                   rows = NA, cols = NA, tooltip = NULL, width = "100%", height = NULL, barWidth = 20, barHeight = 2, margins = c(20,20,20,20),  xlabel = NULL, title, cex.plot, withlegend,
-                  paddingInnerX = 0.01, paddingInnerY = 0,  sortv= NULL, fisheye = NULL, marks = NULL, highlight = NULL, ...){
+                  paddingInnerX = 0.01, paddingInnerY = 0,  sortv= NULL, fisheye = NULL, marks = NULL, position = "center", highlight = NULL, ...){
 
 
 if (typeof(seqdata) == "list"){
@@ -80,7 +80,6 @@ olist <- oolist
 datalist <- list()
 paramlist <-list()
 for (dataSet in seqdata){
-
     names <- attr(dataSet, "names")
     row.names <- attr(dataSet, "row.names")
     start <- attr(dataSet, "start")
@@ -91,6 +90,7 @@ for (dataSet in seqdata){
     labels <- attr(dataSet, "labels")
     weights <- attr(dataSet, "weights")
     if(is.null(cpal)) cpal <- attr(dataSet, "cpal")
+    print(attr(dataSet,"cpal"))
     missing.color <- attr(dataSet, "missing.color")
     xtstep <- attr(dataSet, "xtstep")
     tick.last <- attr(dataSet, "tick.last")
@@ -105,7 +105,7 @@ for (dataSet in seqdata){
 
 
     plist <- list(names = names, row.names = row.names, xtstep = xtstep, cpal=cpal, missing.color=missing.color,
-                  yaxis=yaxis, xtlab=xtlab, labels = labels, alphabet = alphabet,
+                  yaxis=yaxis, xtlab=xtlab, labels = labels, alphabet = alphabet, position = position,
                   barWidth = barWidth, barHeight = barHeight, xlabel = xlabel, width = width, flexwrap = flexwrap,
                   margins = margins, paddingInnerX = paddingInnerX, paddingInnerY = paddingInnerY, legend = legend, tooltip = tooltip, sortv = sortv, fisheye=fisheye, marks = marks, highlight = highlight )
 

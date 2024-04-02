@@ -12,45 +12,24 @@ HTMLWidgets.widget({
     return {
 
       renderValue: function(input) {
-        // TODO: code to render the widget, e.g.
-      //prepare data to normal format
-      const config = input[0][1]
-
-      let data = input.map( d =>  Object.assign(d[0], d[1]))
-       chart = drawChart()
-       let chartContainer = d3.select(el)
-        .append("div")
-          .style("display", "flex")
-          .style("flex-wrap", config.flexwrap)
-          .style("flex-shrink", "0")
-          .selectAll("div")
-          .data(data)
-          .join("div")
-            .attr("class","container")
-            .style("min-width", config.width)
-            .style("display","block")
-            .style("float","left")
-            .style("position", "relative")
-            .style("background-color","white")
+        let [[data, {alphabet, cpak, labels, names, margins, position}]] = input
+        let ids = input[0][1]["row.names"]
+        console.log(input[0][1])
+        new Stream({
+            target: el,
+            props: {
+              yKey: names,
+              data: data,
+              alphabet: alphabet,
+              ids: ids,
+              labels: labels,
+              margins: margins,
+              position: position
 
 
-      chartContainer.call(chart)
-      if(config.fisheye && config.fisheye != [] )
-        chart.fisheye(config.fisheye)
+            }
 
-      if(config.sortv && config.sortv != [] )
-        chart.sortv(config.sortv)
-
-
-      if(config.tooltip && config.tooltip != [] )
-          chart.tooltip(config.tooltip)
-
-      if(config.highlight && config.highlight != [] )
-          chart.highlight(config.highlight)
-      if(config.legend)
-          chart.legend(config.legend)
-
-        return chart
+        })
       }
 
 
@@ -59,7 +38,7 @@ HTMLWidgets.widget({
   }
 });
 
-
+/*
  function drawChart(){
 
         let updateY = [];
@@ -106,8 +85,10 @@ HTMLWidgets.widget({
                 seq.selectAll("rect").attr("height", barHeight)
                 seq.attr("transform", (d,i) => `translate(0,  ${y(d.id)} ) `)
               }
+
+
               const colorScale = d3.scaleOrdinal()
-                                .domain( data.alphabet)
+                                .domain( data.alphabet.map(d => d.toString()))
                                 .range(data.cpal)
                                 .unknown(data["missing.color"]);
               const rownames =  data["row.names"]
@@ -151,9 +132,6 @@ HTMLWidgets.widget({
                     line.show {opacity:1;}
                     g.hidden > line {opacity:1;}`);
 
-
-              const xAx = svg.append("g")
-                            xAx.call(xAxis)
 
               const canvas = svg.append("g")
                           .attr("transform", `translate(${marginsLeft}, ${marginsTop})` )
@@ -215,6 +193,7 @@ HTMLWidgets.widget({
               })
               updateY = updateY.concat(function() {
                 const sortedY = y;
+
                 sortedY.domain(sort);
                   const t = svg.transition()
                     .duration(750);
@@ -240,7 +219,7 @@ HTMLWidgets.widget({
                   .attr("class","legend")
 
                 const legendEnries =  legend.selectAll("div")
-                              .data(d3.zip(colorScale.range(), colorScale.domain()))
+                              .data(d3.zip(colorScale.range(),data.labels  ))
                                 .join("div")
                                 .style("display","flex")
                                 .style("gap","10px")
@@ -394,6 +373,8 @@ HTMLWidgets.widget({
           return chart;
         }
         chart.sortv = function(value) {
+            console.log("SOOORT", value)
+
 
               if (typeof value === 'object' && value.nodropdown ){
                 sort = value.var;
@@ -428,3 +409,4 @@ HTMLWidgets.widget({
         return chart;
 
 }
+*/

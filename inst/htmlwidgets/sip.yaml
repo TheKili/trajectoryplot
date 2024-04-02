@@ -1,7 +1,12 @@
 
 dependencies:
-  - name: d3
-    version: 7.6.1
+  - name: bundle
+    version: 0.0.1
+    src: "htmlwidgets/lib/svelte"
+    script: clientStream.js
+    stylesheet: style.css
+  - name: aaa
+    version: 0.0.1
     src: "htmlwidgets/lib/d3-7.6.1"
     script: d3.js
     stylesheet: style.css
