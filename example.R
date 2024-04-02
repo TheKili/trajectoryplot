@@ -1,6 +1,5 @@
-##using devtools to load the library
-devtools::load_all()
-
+library("devtools")
+install_github("TheKili/seqtrajectoryplot")
 library("TraMineR")
 
 data(biofam)
@@ -29,4 +28,5 @@ biofam.seq <- biofam.seq[order(order, decreasing=TRUE),]
 ## in case that the curves/trajectories are floating out of the image margins is your friend
 ## margins = c(top, left, bottom, right)
 ## position determines how the trajectories are aligned within each categorial state can be either "top" "center" "bottom"
-seqaplot(biofam.seq, margins = c(150, 50, 250, 50), position = "top")
+activeseqIplot::seqaplot(biofam.seq, margins = c(150, 50, 250, 50), position = "top")
+

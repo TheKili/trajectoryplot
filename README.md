@@ -4,8 +4,8 @@ Sequence _active_ plot is an interactive version of the sequence index plot for 
 
 ## Installation
 
-As a prerequisite, ```devtools``` needs to be installed: ```install.packages("devtools")```.
-Next use the following command to download the sequence _active_ plot from GitHub: ```install_github("TheKili/seqaplot")```.
+As a prerequisite, ```devtools``` needs to be installed: ```install.packages("devtools")``` and load it ```library(devtools)```.
+Next use the following command to download the sequence _active_ plot from GitHub: ```install_github("TheKili/seqtrajectoryplot")```.
 Now, you can use it simply as a R command: ```seqaplot(seqdata) ```.
 
 ## Usage
