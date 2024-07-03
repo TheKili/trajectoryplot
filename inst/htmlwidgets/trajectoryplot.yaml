@@ -1,0 +1,8 @@
+
+dependencies:
+  - name: trajectoryplot
+    version: 0.0.1
+    src: "htmlwidgets/lib/svelte"
+    script: clientTrajectoryPlot.js
+    stylesheet: style.css
+  

@@ -1,19 +1,22 @@
-Package: activeseqIplot
+Package: trajectoryplot
 Type: Package
-Title: What the Package Does (Title Case)
+Title: Trajectoryplot - Visualize your sequences
 Version: 0.1.0
-Author: Who wrote it
-Maintainer: The package maintainer <yourself@somewhere.net>
-Description: More about what it does (maybe more than one line)
-    Use four spaces when indenting paragraphs within the Description.
-License: What license is it under?
+Author: Kilian Ruess
+Description: A R binding to visualize sequence data.
+	The trajectory plot combines the fixed layout of a parallel coordinates plot with the group size depending layout of a parallel sets chart.
+	It offers a new way to visualize (timeseries) sequence data. 
+License: MIT
 Encoding: UTF-8
 LazyData: true
-RoxygenNote: 7.2.3
+RoxygenNote: 7.3.1
+Depends: 
+	data.table
 Imports:
     htmlwidgets,
     htmltools,
     magrittr,
     xts,
     tidyr,
-    dplyr
+    dplyr,
+    data.table

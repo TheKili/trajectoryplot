@@ -3,7 +3,7 @@
 /** @returns {void} */
 function noop() {}
 
-const identity$4 = (x) => x;
+const identity$3 = (x) => x;
 
 /**
  * @template T
@@ -411,6 +411,14 @@ function detach(node) {
 }
 
 /**
+ * @returns {void} */
+function destroy_each(iterations, detaching) {
+	for (let i = 0; i < iterations.length; i += 1) {
+		if (iterations[i]) iterations[i].d(detaching);
+	}
+}
+
+/**
  * @template {keyof HTMLElementTagNameMap} K
  * @param {K} name
  * @returns {HTMLElementTagNameMap[K]}
@@ -642,7 +650,7 @@ function set_style(node, key, value, important) {
 	if (value == null) {
 		node.style.removeProperty(key);
 	} else {
-		node.style.setProperty(key, value, important ? 'important' : '');
+		node.style.setProperty(key, value, '');
 	}
 }
 // unfortunately this can't be a constant as that wouldn't be tree-shakeable
@@ -1059,13 +1067,6 @@ function destroy_block(block, lookup) {
 	lookup.delete(block.key);
 }
 
-/** @returns {void} */
-function outro_and_destroy_block(block, lookup) {
-	transition_out(block, 1, 1, () => {
-		lookup.delete(block.key);
-	});
-}
-
 /** @returns {any[]} */
 function update_keyed_each(
 	old_blocks,
@@ -1098,7 +1099,7 @@ function update_keyed_each(
 		if (!block) {
 			block = create_each_block(key, child_ctx);
 			block.c();
-		} else if (dynamic) {
+		} else {
 			// defer updates until all the DOM shuffling is done
 			updates.push(() => block.p(child_ctx, dirty));
 		}
@@ -1693,7 +1694,6 @@ function number$1(x) {
 const ascendingBisect = bisector(ascending);
 const bisectRight = ascendingBisect.right;
 bisector(number$1).center;
-var bisect = bisectRight;
 
 class InternMap extends Map {
   constructor(entries, key = keyof) {
@@ -1757,33 +1757,6 @@ function keyof(value) {
   return value !== null && typeof value === "object" ? value.valueOf() : value;
 }
 
-function identity$3(x) {
-  return x;
-}
-
-function rollup(values, reduce, ...keys) {
-  return nest(values, identity$3, reduce, keys);
-}
-
-function nest(values, map, reduce, keys) {
-  return (function regroup(values, i) {
-    if (i >= keys.length) return reduce(values);
-    const groups = new InternMap();
-    const keyof = keys[i++];
-    let index = -1;
-    for (const value of values) {
-      const key = keyof(value, ++index, values);
-      const group = groups.get(key);
-      if (group) group.push(value);
-      else groups.set(key, [value]);
-    }
-    for (const [key, values] of groups) {
-      groups.set(key, regroup(values, i));
-    }
-    return map(groups);
-  })(values, 0);
-}
-
 const e10 = Math.sqrt(50),
     e5 = Math.sqrt(10),
     e2 = Math.sqrt(2);
@@ -1838,27 +1811,6 @@ function tickStep(start, stop, count) {
   stop = +stop, start = +start, count = +count;
   const reverse = stop < start, inc = reverse ? tickIncrement(stop, start, count) : tickIncrement(start, stop, count);
   return (reverse ? -1 : 1) * (inc < 0 ? 1 / -inc : inc);
-}
-
-function max(values, valueof) {
-  let max;
-  if (valueof === undefined) {
-    for (const value of values) {
-      if (value != null
-          && (max < value || (max === undefined && value >= value))) {
-        max = value;
-      }
-    }
-  } else {
-    let index = -1;
-    for (let value of values) {
-      if ((value = valueof(value, ++index, values)) != null
-          && (max < value || (max === undefined && value >= value))) {
-        max = value;
-      }
-    }
-  }
-  return max;
 }
 
 function range(start, stop, step) {
@@ -2643,7 +2595,7 @@ function hsl2rgb(h, m1, m2) {
       : m1) * 255;
 }
 
-var constant$1 = x => () => x;
+var constant = x => () => x;
 
 function linear$1(a, d) {
   return function(t) {
@@ -2659,13 +2611,13 @@ function exponential(a, b, y) {
 
 function gamma(y) {
   return (y = +y) === 1 ? nogamma : function(a, b) {
-    return b - a ? exponential(a, b, y) : constant$1(isNaN(a) ? b : a);
+    return b - a ? exponential(a, b, y) : constant(isNaN(a) ? b : a);
   };
 }
 
 function nogamma(a, b) {
   var d = b - a;
-  return d ? linear$1(a, d) : constant$1(isNaN(a) ? b : a);
+  return d ? linear$1(a, d) : constant(isNaN(a) ? b : a);
 }
 
 var rgb = (function rgbGamma(y) {
@@ -2821,7 +2773,7 @@ function string(a, b) {
 
 function interpolate(a, b) {
   var t = typeof b, c;
-  return b == null || t === "boolean" ? constant$1(b)
+  return b == null || t === "boolean" ? constant(b)
       : (t === "number" ? interpolateNumber
       : t === "string" ? ((c = color(b)) ? (b = c, rgb) : string)
       : b instanceof color ? rgb
@@ -2893,7 +2845,7 @@ function polymap(domain, range, interpolate) {
   }
 
   return function(x) {
-    var i = bisect(domain, x, 1, j) - 1;
+    var i = bisectRight(domain, x, 1, j) - 1;
     return r[i](d[i](x));
   };
 }
@@ -3975,8 +3927,8 @@ const get_default_slot_context$3 = ctx => ({
 	rGet: /*$rGet_d*/ ctx[50]
 });
 
-// (469:0) {#if ssr === true || typeof window !== 'undefined'}
-function create_if_block$5(ctx) {
+// (473:0) {#if ssr === true || typeof window !== 'undefined'}
+function create_if_block$6(ctx) {
 	let div;
 	let div_resize_listener;
 	let current;
@@ -4081,7 +4033,7 @@ function create_if_block$5(ctx) {
 function create_fragment$7(ctx) {
 	let if_block_anchor;
 	let current;
-	let if_block = (/*ssr*/ ctx[3] === true || typeof window !== 'undefined') && create_if_block$5(ctx);
+	let if_block = (/*ssr*/ ctx[3] === true || typeof window !== 'undefined') && create_if_block$6(ctx);
 
 	return {
 		c() {
@@ -4106,7 +4058,7 @@ function create_fragment$7(ctx) {
 						transition_in(if_block, 1);
 					}
 				} else {
-					if_block = create_if_block$5(ctx);
+					if_block = create_if_block$6(ctx);
 					if_block.c();
 					transition_in(if_block, 1);
 					if_block.m(if_block_anchor.parentNode, if_block_anchor);
@@ -5119,7 +5071,7 @@ const get_title_slot_changes = dirty => ({});
 const get_title_slot_context = ctx => ({});
 
 // (50:20) {#if title}
-function create_if_block$4(ctx) {
+function create_if_block$5(ctx) {
 	let title_1;
 	let t;
 
@@ -5152,7 +5104,7 @@ function create_if_block$4(ctx) {
 // (50:20) {#if title}
 function fallback_block$1(ctx) {
 	let if_block_anchor;
-	let if_block = /*title*/ ctx[8] && create_if_block$4(ctx);
+	let if_block = /*title*/ ctx[8] && create_if_block$5(ctx);
 
 	return {
 		c() {
@@ -5172,7 +5124,7 @@ function fallback_block$1(ctx) {
 				if (if_block) {
 					if_block.p(ctx, dirty);
 				} else {
-					if_block = create_if_block$4(ctx);
+					if_block = create_if_block$5(ctx);
 					if_block.c();
 					if_block.m(if_block_anchor.parentNode, if_block_anchor);
 				}
@@ -5519,7 +5471,7 @@ const get_fallback_slot_changes = dirty => ({});
 const get_fallback_slot_context = ctx => ({});
 
 // (62:23) {#if fallback}
-function create_if_block$3(ctx) {
+function create_if_block$4(ctx) {
 	let t;
 
 	return {
@@ -5546,7 +5498,7 @@ function create_if_block$3(ctx) {
 // (62:23) {#if fallback}
 function fallback_block(ctx) {
 	let if_block_anchor;
-	let if_block = /*fallback*/ ctx[4] && create_if_block$3(ctx);
+	let if_block = /*fallback*/ ctx[4] && create_if_block$4(ctx);
 
 	return {
 		c() {
@@ -5566,7 +5518,7 @@ function fallback_block(ctx) {
 				if (if_block) {
 					if_block.p(ctx, dirty);
 				} else {
-					if_block = create_if_block$3(ctx);
+					if_block = create_if_block$4(ctx);
 					if_block.c();
 					if_block.m(if_block_anchor.parentNode, if_block_anchor);
 				}
@@ -5832,876 +5784,6 @@ class Canvas extends SvelteComponent {
 	}
 }
 
-function constant(x) {
-  return function constant() {
-    return x;
-  };
-}
-
-function array(x) {
-  return typeof x === "object" && "length" in x
-    ? x // Array, TypedArray, NodeList, array-like
-    : Array.from(x); // Map, Set, iterable, string, or anything else
-}
-
-function none$1(series, order) {
-  if (!((n = series.length) > 1)) return;
-  for (var i = 1, j, s0, s1 = series[order[0]], n, m = s1.length; i < n; ++i) {
-    s0 = s1, s1 = series[order[i]];
-    for (j = 0; j < m; ++j) {
-      s1[j][1] += s1[j][0] = isNaN(s0[j][1]) ? s0[j][0] : s0[j][1];
-    }
-  }
-}
-
-function none(series) {
-  var n = series.length, o = new Array(n);
-  while (--n >= 0) o[n] = n;
-  return o;
-}
-
-function stackValue(d, key) {
-  return d[key];
-}
-
-function stackSeries(key) {
-  const series = [];
-  series.key = key;
-  return series;
-}
-
-function stack() {
-  var keys = constant([]),
-      order = none,
-      offset = none$1,
-      value = stackValue;
-
-  function stack(data) {
-    var sz = Array.from(keys.apply(this, arguments), stackSeries),
-        i, n = sz.length, j = -1,
-        oz;
-
-    for (const d of data) {
-      for (i = 0, ++j; i < n; ++i) {
-        (sz[i][j] = [0, +value(d, sz[i].key, j, data)]).data = d;
-      }
-    }
-
-    for (i = 0, oz = array(order(sz)); i < n; ++i) {
-      sz[oz[i]].index = i;
-    }
-
-    offset(sz, oz);
-    return sz;
-  }
-
-  stack.keys = function(_) {
-    return arguments.length ? (keys = typeof _ === "function" ? _ : constant(Array.from(_)), stack) : keys;
-  };
-
-  stack.value = function(_) {
-    return arguments.length ? (value = typeof _ === "function" ? _ : constant(+_), stack) : value;
-  };
-
-  stack.order = function(_) {
-    return arguments.length ? (order = _ == null ? none : typeof _ === "function" ? _ : constant(Array.from(_)), stack) : order;
-  };
-
-  stack.offset = function(_) {
-    return arguments.length ? (offset = _ == null ? none$1 : _, stack) : offset;
-  };
-
-  return stack;
-}
-
-/* src/routes/seqplot/stream/Dodger.svelte generated by Svelte v4.2.9 */
-const get_default_slot_changes = dirty => ({ d: dirty & /*stack*/ 1 });
-const get_default_slot_context = ctx => ({ d: /*stack*/ ctx[0] });
-
-function create_fragment$4(ctx) {
-	let current;
-	const default_slot_template = /*#slots*/ ctx[7].default;
-	const default_slot = create_slot(default_slot_template, ctx, /*$$scope*/ ctx[6], get_default_slot_context);
-
-	return {
-		c() {
-			if (default_slot) default_slot.c();
-		},
-		l(nodes) {
-			if (default_slot) default_slot.l(nodes);
-		},
-		m(target, anchor) {
-			if (default_slot) {
-				default_slot.m(target, anchor);
-			}
-
-			current = true;
-		},
-		p(ctx, [dirty]) {
-			if (default_slot) {
-				if (default_slot.p && (!current || dirty & /*$$scope, stack*/ 65)) {
-					update_slot_base(
-						default_slot,
-						default_slot_template,
-						ctx,
-						/*$$scope*/ ctx[6],
-						!current
-						? get_all_dirty_from_scope(/*$$scope*/ ctx[6])
-						: get_slot_changes(default_slot_template, /*$$scope*/ ctx[6], dirty, get_default_slot_changes),
-						get_default_slot_context
-					);
-				}
-			}
-		},
-		i(local) {
-			if (current) return;
-			transition_in(default_slot, local);
-			current = true;
-		},
-		o(local) {
-			transition_out(default_slot, local);
-			current = false;
-		},
-		d(detaching) {
-			if (default_slot) default_slot.d(detaching);
-		}
-	};
-}
-
-function instance$5($$self, $$props, $$invalidate) {
-	let $yScale;
-	let { $$slots: slots = {}, $$scope } = $$props;
-	const { xRange, yRange, yScale, width } = getContext('LayerCake');
-	component_subscribe($$self, yScale, value => $$invalidate(5, $yScale = value));
-	let { offSet = 0 } = $$props;
-	let { i = 0 } = $$props;
-	let { y = 0 } = $$props;
-	let { stack = [] } = $$props;
-
-	$$self.$$set = $$props => {
-		if ('offSet' in $$props) $$invalidate(2, offSet = $$props.offSet);
-		if ('i' in $$props) $$invalidate(3, i = $$props.i);
-		if ('y' in $$props) $$invalidate(4, y = $$props.y);
-		if ('stack' in $$props) $$invalidate(0, stack = $$props.stack);
-		if ('$$scope' in $$props) $$invalidate(6, $$scope = $$props.$$scope);
-	};
-
-	$$self.$$.update = () => {
-		if ($$self.$$.dirty & /*stack, $yScale, offSet*/ 37) {
-			{
-				$$invalidate(0, stack = stack.map(d => ({ d, coord: $yScale(d) })));
-
-				for (let i in stack) {
-					//die einträge gehen von oben nach unten
-					// d.h. die y-werte werden kleiner
-					// also sollte der jetzige wert kleiner sein als der vorausgehende
-					if (stack[i].coord + offSet > stack[i - 1]?.coord) $$invalidate(0, stack[i].coord = stack[i - 1]?.coord - offSet, stack);
-				}
-			}
-		}
-	};
-
-	return [stack, yScale, offSet, i, y, $yScale, $$scope, slots];
-}
-
-class Dodger extends SvelteComponent {
-	constructor(options) {
-		super();
-		init(this, options, instance$5, create_fragment$4, safe_not_equal, { offSet: 2, i: 3, y: 4, stack: 0 });
-	}
-}
-
-/* src/routes/seqplot/stream/AxisY.svelte generated by Svelte v4.2.9 */
-
-function add_css$2(target) {
-	append_styles(target, "svelte-zyly5l", ".tick.svelte-zyly5l.svelte-zyly5l{font-size:11px}.tick.svelte-zyly5l line.svelte-zyly5l{stroke:#aaa}.tick.svelte-zyly5l .gridline.svelte-zyly5l{stroke-dasharray:2}.tick.svelte-zyly5l text.svelte-zyly5l{fill:#666}.tick.tick-0.svelte-zyly5l line.svelte-zyly5l{stroke-dasharray:0}");
-}
-
-function get_each_context$2(ctx, list, i) {
-	const child_ctx = ctx.slice();
-	child_ctx[32] = list[i];
-	child_ctx[35] = i;
-	const constants_0 = /*$yScale*/ child_ctx[13](/*tick*/ child_ctx[32].d);
-	child_ctx[33] = constants_0;
-	return child_ctx;
-}
-
-// (85:2) {#if axisLine}
-function create_if_block_3(ctx) {
-	let line;
-	let line_y__value;
-	let line_y__value_1;
-
-	return {
-		c() {
-			line = svg_element("line");
-			this.h();
-		},
-		l(nodes) {
-			line = claim_svg_element(nodes, "line", {
-				x1: true,
-				x2: true,
-				y1: true,
-				y2: true,
-				style: true
-			});
-
-			children(line).forEach(detach);
-			this.h();
-		},
-		h() {
-			attr(line, "x1", /*x1*/ ctx[16]);
-			attr(line, "x2", /*x1*/ ctx[16]);
-			attr(line, "y1", line_y__value = /*tickVals*/ ctx[11].map(/*$yScale*/ ctx[13])[0]);
-			attr(line, "y2", line_y__value_1 = /*tickVals*/ ctx[11].map(/*$yScale*/ ctx[13])[/*tickVals*/ ctx[11].length - 1]);
-			set_style(line, "stroke-width", "1");
-			set_style(line, "stroke", "#aaa");
-		},
-		m(target, anchor) {
-			insert_hydration(target, line, anchor);
-		},
-		p(ctx, dirty) {
-			if (dirty[0] & /*x1*/ 65536) {
-				attr(line, "x1", /*x1*/ ctx[16]);
-			}
-
-			if (dirty[0] & /*x1*/ 65536) {
-				attr(line, "x2", /*x1*/ ctx[16]);
-			}
-
-			if (dirty[0] & /*tickVals, $yScale*/ 10240 && line_y__value !== (line_y__value = /*tickVals*/ ctx[11].map(/*$yScale*/ ctx[13])[0])) {
-				attr(line, "y1", line_y__value);
-			}
-
-			if (dirty[0] & /*tickVals, $yScale*/ 10240 && line_y__value_1 !== (line_y__value_1 = /*tickVals*/ ctx[11].map(/*$yScale*/ ctx[13])[/*tickVals*/ ctx[11].length - 1])) {
-				attr(line, "y2", line_y__value_1);
-			}
-		},
-		d(detaching) {
-			if (detaching) {
-				detach(line);
-			}
-		}
-	};
-}
-
-// (101:6) {#if gridlines === true}
-function create_if_block_2$1(ctx) {
-	let line;
-
-	return {
-		c() {
-			line = svg_element("line");
-			this.h();
-		},
-		l(nodes) {
-			line = claim_svg_element(nodes, "line", {
-				class: true,
-				x1: true,
-				x2: true,
-				y1: true,
-				y2: true
-			});
-
-			children(line).forEach(detach);
-			this.h();
-		},
-		h() {
-			attr(line, "class", "gridline svelte-zyly5l");
-			attr(line, "x1", /*x1*/ ctx[16]);
-			attr(line, "x2", /*$width*/ ctx[18]);
-			attr(line, "y1", /*y*/ ctx[15]);
-			attr(line, "y2", /*y*/ ctx[15]);
-		},
-		m(target, anchor) {
-			insert_hydration(target, line, anchor);
-		},
-		p(ctx, dirty) {
-			if (dirty[0] & /*x1*/ 65536) {
-				attr(line, "x1", /*x1*/ ctx[16]);
-			}
-
-			if (dirty[0] & /*$width*/ 262144) {
-				attr(line, "x2", /*$width*/ ctx[18]);
-			}
-
-			if (dirty[0] & /*y*/ 32768) {
-				attr(line, "y1", /*y*/ ctx[15]);
-			}
-
-			if (dirty[0] & /*y*/ 32768) {
-				attr(line, "y2", /*y*/ ctx[15]);
-			}
-		},
-		d(detaching) {
-			if (detaching) {
-				detach(line);
-			}
-		}
-	};
-}
-
-// (110:6) {#if tickMarks === true}
-function create_if_block_1$1(ctx) {
-	let line;
-	let line_x__value;
-	let line_y__value;
-
-	return {
-		c() {
-			line = svg_element("line");
-			this.h();
-		},
-		l(nodes) {
-			line = claim_svg_element(nodes, "line", {
-				class: true,
-				x1: true,
-				x2: true,
-				y1: true,
-				y2: true
-			});
-
-			children(line).forEach(detach);
-			this.h();
-		},
-		h() {
-			attr(line, "class", "tick-mark svelte-zyly5l");
-			attr(line, "x1", /*x1*/ ctx[16]);
-			attr(line, "x2", line_x__value = /*x1*/ ctx[16] + /*tickLen*/ ctx[12]);
-			attr(line, "y1", line_y__value = /*tick*/ ctx[32].coord - /*tickValPx*/ ctx[33]);
-			attr(line, "y2", /*y*/ ctx[15]);
-		},
-		m(target, anchor) {
-			insert_hydration(target, line, anchor);
-		},
-		p(ctx, dirty) {
-			if (dirty[0] & /*x1*/ 65536) {
-				attr(line, "x1", /*x1*/ ctx[16]);
-			}
-
-			if (dirty[0] & /*x1, tickLen*/ 69632 && line_x__value !== (line_x__value = /*x1*/ ctx[16] + /*tickLen*/ ctx[12])) {
-				attr(line, "x2", line_x__value);
-			}
-
-			if (dirty[0] & /*$yScale*/ 8192 | dirty[1] & /*d*/ 1 && line_y__value !== (line_y__value = /*tick*/ ctx[32].coord - /*tickValPx*/ ctx[33])) {
-				attr(line, "y1", line_y__value);
-			}
-
-			if (dirty[0] & /*y*/ 32768) {
-				attr(line, "y2", /*y*/ ctx[15]);
-			}
-		},
-		d(detaching) {
-			if (detaching) {
-				detach(line);
-			}
-		}
-	};
-}
-
-// (119:6) {#if tickLabel === true}
-function create_if_block$2(ctx) {
-	let text_1;
-
-	let t_value = (/*tickMap*/ ctx[8]
-	? /*tickMap*/ ctx[8].get(/*tick*/ ctx[32].d)
-	: /*format*/ ctx[5](/*tick*/ ctx[32])) + "";
-
-	let t;
-	let text_1_y_value;
-	let text_1_dx_value;
-	let text_1_text_anchor_value;
-	let text_1_dy_value;
-
-	return {
-		c() {
-			text_1 = svg_element("text");
-			t = text(t_value);
-			this.h();
-		},
-		l(nodes) {
-			text_1 = claim_svg_element(nodes, "text", {
-				x: true,
-				y: true,
-				dx: true,
-				"text-anchor": true,
-				dy: true,
-				class: true
-			});
-
-			var text_1_nodes = children(text_1);
-			t = claim_text(text_1_nodes, t_value);
-			text_1_nodes.forEach(detach);
-			this.h();
-		},
-		h() {
-			attr(text_1, "x", /*x1*/ ctx[16]);
-			attr(text_1, "y", text_1_y_value = /*tick*/ ctx[32].coord - /*tickValPx*/ ctx[33]);
-			attr(text_1, "dx", text_1_dx_value = /*dx*/ ctx[6] + (/*labelPosition*/ ctx[2] === 'even' ? -3 : 0));
-			attr(text_1, "text-anchor", text_1_text_anchor_value = /*labelPosition*/ ctx[2] === 'above' ? 'start' : 'end');
-
-			attr(text_1, "dy", text_1_dy_value = /*dy*/ ctx[7] + (/*labelPosition*/ ctx[2] === 'above' || /*snapBaselineLabel*/ ctx[3] === true && /*tickValPx*/ ctx[33] === /*maxTickValPx*/ ctx[14]
-			? -3
-			: 4));
-
-			attr(text_1, "class", "svelte-zyly5l");
-		},
-		m(target, anchor) {
-			insert_hydration(target, text_1, anchor);
-			append_hydration(text_1, t);
-		},
-		p(ctx, dirty) {
-			if (dirty[0] & /*tickMap, format*/ 288 | dirty[1] & /*d*/ 1 && t_value !== (t_value = (/*tickMap*/ ctx[8]
-			? /*tickMap*/ ctx[8].get(/*tick*/ ctx[32].d)
-			: /*format*/ ctx[5](/*tick*/ ctx[32])) + "")) set_data(t, t_value);
-
-			if (dirty[0] & /*x1*/ 65536) {
-				attr(text_1, "x", /*x1*/ ctx[16]);
-			}
-
-			if (dirty[0] & /*$yScale*/ 8192 | dirty[1] & /*d*/ 1 && text_1_y_value !== (text_1_y_value = /*tick*/ ctx[32].coord - /*tickValPx*/ ctx[33])) {
-				attr(text_1, "y", text_1_y_value);
-			}
-
-			if (dirty[0] & /*dx, labelPosition*/ 68 && text_1_dx_value !== (text_1_dx_value = /*dx*/ ctx[6] + (/*labelPosition*/ ctx[2] === 'even' ? -3 : 0))) {
-				attr(text_1, "dx", text_1_dx_value);
-			}
-
-			if (dirty[0] & /*labelPosition*/ 4 && text_1_text_anchor_value !== (text_1_text_anchor_value = /*labelPosition*/ ctx[2] === 'above' ? 'start' : 'end')) {
-				attr(text_1, "text-anchor", text_1_text_anchor_value);
-			}
-
-			if (dirty[0] & /*dy, labelPosition, snapBaselineLabel, $yScale, maxTickValPx*/ 24716 | dirty[1] & /*d*/ 1 && text_1_dy_value !== (text_1_dy_value = /*dy*/ ctx[7] + (/*labelPosition*/ ctx[2] === 'above' || /*snapBaselineLabel*/ ctx[3] === true && /*tickValPx*/ ctx[33] === /*maxTickValPx*/ ctx[14]
-			? -3
-			: 4))) {
-				attr(text_1, "dy", text_1_dy_value);
-			}
-		},
-		d(detaching) {
-			if (detaching) {
-				detach(text_1);
-			}
-		}
-	};
-}
-
-// (98:2) {#each d as tick,i (tick)}
-function create_each_block$2(key_1, ctx) {
-	let g;
-	let if_block0_anchor;
-	let if_block1_anchor;
-	let g_class_value;
-	let g_transform_value;
-	let if_block0 = /*gridlines*/ ctx[4] === true && create_if_block_2$1(ctx);
-	let if_block1 = /*tickMarks*/ ctx[0] === true && create_if_block_1$1(ctx);
-	let if_block2 = /*tickLabel*/ ctx[1] === true && create_if_block$2(ctx);
-
-	return {
-		key: key_1,
-		first: null,
-		c() {
-			g = svg_element("g");
-			if (if_block0) if_block0.c();
-			if_block0_anchor = empty();
-			if (if_block1) if_block1.c();
-			if_block1_anchor = empty();
-			if (if_block2) if_block2.c();
-			this.h();
-		},
-		l(nodes) {
-			g = claim_svg_element(nodes, "g", { class: true, transform: true });
-			var g_nodes = children(g);
-			if (if_block0) if_block0.l(g_nodes);
-			if_block0_anchor = empty();
-			if (if_block1) if_block1.l(g_nodes);
-			if_block1_anchor = empty();
-			if (if_block2) if_block2.l(g_nodes);
-			g_nodes.forEach(detach);
-			this.h();
-		},
-		h() {
-			attr(g, "class", g_class_value = "tick tick-" + /*tick*/ ctx[32] + " svelte-zyly5l");
-			attr(g, "transform", g_transform_value = "translate(" + /*$xRange*/ ctx[17][0] + ", " + /*tickValPx*/ ctx[33] + ")");
-			this.first = g;
-		},
-		m(target, anchor) {
-			insert_hydration(target, g, anchor);
-			if (if_block0) if_block0.m(g, null);
-			append_hydration(g, if_block0_anchor);
-			if (if_block1) if_block1.m(g, null);
-			append_hydration(g, if_block1_anchor);
-			if (if_block2) if_block2.m(g, null);
-		},
-		p(new_ctx, dirty) {
-			ctx = new_ctx;
-
-			if (/*gridlines*/ ctx[4] === true) {
-				if (if_block0) {
-					if_block0.p(ctx, dirty);
-				} else {
-					if_block0 = create_if_block_2$1(ctx);
-					if_block0.c();
-					if_block0.m(g, if_block0_anchor);
-				}
-			} else if (if_block0) {
-				if_block0.d(1);
-				if_block0 = null;
-			}
-
-			if (/*tickMarks*/ ctx[0] === true) {
-				if (if_block1) {
-					if_block1.p(ctx, dirty);
-				} else {
-					if_block1 = create_if_block_1$1(ctx);
-					if_block1.c();
-					if_block1.m(g, if_block1_anchor);
-				}
-			} else if (if_block1) {
-				if_block1.d(1);
-				if_block1 = null;
-			}
-
-			if (/*tickLabel*/ ctx[1] === true) {
-				if (if_block2) {
-					if_block2.p(ctx, dirty);
-				} else {
-					if_block2 = create_if_block$2(ctx);
-					if_block2.c();
-					if_block2.m(g, null);
-				}
-			} else if (if_block2) {
-				if_block2.d(1);
-				if_block2 = null;
-			}
-
-			if (dirty[1] & /*d*/ 1 && g_class_value !== (g_class_value = "tick tick-" + /*tick*/ ctx[32] + " svelte-zyly5l")) {
-				attr(g, "class", g_class_value);
-			}
-
-			if (dirty[0] & /*$xRange, $yScale*/ 139264 | dirty[1] & /*d*/ 1 && g_transform_value !== (g_transform_value = "translate(" + /*$xRange*/ ctx[17][0] + ", " + /*tickValPx*/ ctx[33] + ")")) {
-				attr(g, "transform", g_transform_value);
-			}
-		},
-		d(detaching) {
-			if (detaching) {
-				detach(g);
-			}
-
-			if (if_block0) if_block0.d();
-			if (if_block1) if_block1.d();
-			if (if_block2) if_block2.d();
-		}
-	};
-}
-
-// (96:0) <Dodger stack = {tickVals} let:d {offSet}  >
-function create_default_slot$1(ctx) {
-	let each_blocks = [];
-	let each_1_lookup = new Map();
-	let each_1_anchor;
-	let each_value = ensure_array_like(/*d*/ ctx[31]);
-	const get_key = ctx => /*tick*/ ctx[32];
-
-	for (let i = 0; i < each_value.length; i += 1) {
-		let child_ctx = get_each_context$2(ctx, each_value, i);
-		let key = get_key(child_ctx);
-		each_1_lookup.set(key, each_blocks[i] = create_each_block$2(key, child_ctx));
-	}
-
-	return {
-		c() {
-			for (let i = 0; i < each_blocks.length; i += 1) {
-				each_blocks[i].c();
-			}
-
-			each_1_anchor = empty();
-		},
-		l(nodes) {
-			for (let i = 0; i < each_blocks.length; i += 1) {
-				each_blocks[i].l(nodes);
-			}
-
-			each_1_anchor = empty();
-		},
-		m(target, anchor) {
-			for (let i = 0; i < each_blocks.length; i += 1) {
-				if (each_blocks[i]) {
-					each_blocks[i].m(target, anchor);
-				}
-			}
-
-			insert_hydration(target, each_1_anchor, anchor);
-		},
-		p(ctx, dirty) {
-			if (dirty[0] & /*$xRange, $yScale, x1, dx, labelPosition, dy, snapBaselineLabel, maxTickValPx, tickMap, format, tickLabel, tickLen, y, tickMarks, $width, gridlines*/ 520703 | dirty[1] & /*d*/ 1) {
-				each_value = ensure_array_like(/*d*/ ctx[31]);
-				each_blocks = update_keyed_each(each_blocks, dirty, get_key, 1, ctx, each_value, each_1_lookup, each_1_anchor.parentNode, destroy_block, create_each_block$2, each_1_anchor, get_each_context$2);
-			}
-		},
-		d(detaching) {
-			if (detaching) {
-				detach(each_1_anchor);
-			}
-
-			for (let i = 0; i < each_blocks.length; i += 1) {
-				each_blocks[i].d(detaching);
-			}
-		}
-	};
-}
-
-function create_fragment$3(ctx) {
-	let g;
-	let if_block_anchor;
-	let dodger;
-	let current;
-	let if_block = /*axisLine*/ ctx[9] && create_if_block_3(ctx);
-
-	dodger = new Dodger({
-			props: {
-				stack: /*tickVals*/ ctx[11],
-				offSet: /*offSet*/ ctx[10],
-				$$slots: {
-					default: [create_default_slot$1, ({ d }) => ({ 31: d }), ({ d }) => [0, d ? 1 : 0]]
-				},
-				$$scope: { ctx }
-			}
-		});
-
-	return {
-		c() {
-			g = svg_element("g");
-			if (if_block) if_block.c();
-			if_block_anchor = empty();
-			create_component(dodger.$$.fragment);
-			this.h();
-		},
-		l(nodes) {
-			g = claim_svg_element(nodes, "g", { class: true });
-			var g_nodes = children(g);
-			if (if_block) if_block.l(g_nodes);
-			if_block_anchor = empty();
-			claim_component(dodger.$$.fragment, g_nodes);
-			g_nodes.forEach(detach);
-			this.h();
-		},
-		h() {
-			attr(g, "class", "axis y-axis");
-		},
-		m(target, anchor) {
-			insert_hydration(target, g, anchor);
-			if (if_block) if_block.m(g, null);
-			append_hydration(g, if_block_anchor);
-			mount_component(dodger, g, null);
-			current = true;
-		},
-		p(ctx, dirty) {
-			if (/*axisLine*/ ctx[9]) {
-				if (if_block) {
-					if_block.p(ctx, dirty);
-				} else {
-					if_block = create_if_block_3(ctx);
-					if_block.c();
-					if_block.m(g, if_block_anchor);
-				}
-			} else if (if_block) {
-				if_block.d(1);
-				if_block = null;
-			}
-
-			const dodger_changes = {};
-			if (dirty[0] & /*tickVals*/ 2048) dodger_changes.stack = /*tickVals*/ ctx[11];
-			if (dirty[0] & /*offSet*/ 1024) dodger_changes.offSet = /*offSet*/ ctx[10];
-
-			if (dirty[0] & /*$xRange, $yScale, x1, dx, labelPosition, dy, snapBaselineLabel, maxTickValPx, tickMap, format, tickLabel, tickLen, y, tickMarks, $width, gridlines*/ 520703 | dirty[1] & /*$$scope, d*/ 33) {
-				dodger_changes.$$scope = { dirty, ctx };
-			}
-
-			dodger.$set(dodger_changes);
-		},
-		i(local) {
-			if (current) return;
-			transition_in(dodger.$$.fragment, local);
-			current = true;
-		},
-		o(local) {
-			transition_out(dodger.$$.fragment, local);
-			current = false;
-		},
-		d(detaching) {
-			if (detaching) {
-				detach(g);
-			}
-
-			if (if_block) if_block.d();
-			destroy_component(dodger);
-		}
-	};
-}
-
-function instance$4($$self, $$props, $$invalidate) {
-	let isBandwidth;
-	let tickVals;
-	let tickLen;
-	let widestTickLen;
-	let x1;
-	let y;
-	let maxTickValPx;
-	let $yScale;
-	let $xRange;
-	let $width;
-	const { xRange, yRange, yScale, width } = getContext('LayerCake');
-	component_subscribe($$self, xRange, value => $$invalidate(17, $xRange = value));
-	component_subscribe($$self, yScale, value => $$invalidate(13, $yScale = value));
-	component_subscribe($$self, width, value => $$invalidate(18, $width = value));
-	let { tickMarks = false } = $$props;
-	let { tickLabel = false } = $$props;
-	let { labelPosition = 'even' } = $$props;
-	let { snapBaselineLabel = false } = $$props;
-	let { gridlines = true } = $$props;
-	let { tickMarkLength = undefined } = $$props;
-	let { format = d => d } = $$props;
-	let { ticks = 4 } = $$props;
-	let { tickGutter = 0 } = $$props;
-	let { dx = 0 } = $$props;
-	let { dy = 0 } = $$props;
-	let { offsetY = 0 } = $$props;
-	let { charPixelWidth = 7.25 } = $$props;
-	let { tickMap } = $$props;
-	let { axisLine } = $$props;
-	let { offSet = 0 } = $$props;
-
-	function calcStringLength(sum, val) {
-		if (val === ',' || val === '.') return sum + charPixelWidth * 0.5;
-		return sum + charPixelWidth;
-	}
-
-	$$self.$$set = $$props => {
-		if ('tickMarks' in $$props) $$invalidate(0, tickMarks = $$props.tickMarks);
-		if ('tickLabel' in $$props) $$invalidate(1, tickLabel = $$props.tickLabel);
-		if ('labelPosition' in $$props) $$invalidate(2, labelPosition = $$props.labelPosition);
-		if ('snapBaselineLabel' in $$props) $$invalidate(3, snapBaselineLabel = $$props.snapBaselineLabel);
-		if ('gridlines' in $$props) $$invalidate(4, gridlines = $$props.gridlines);
-		if ('tickMarkLength' in $$props) $$invalidate(22, tickMarkLength = $$props.tickMarkLength);
-		if ('format' in $$props) $$invalidate(5, format = $$props.format);
-		if ('ticks' in $$props) $$invalidate(23, ticks = $$props.ticks);
-		if ('tickGutter' in $$props) $$invalidate(24, tickGutter = $$props.tickGutter);
-		if ('dx' in $$props) $$invalidate(6, dx = $$props.dx);
-		if ('dy' in $$props) $$invalidate(7, dy = $$props.dy);
-		if ('offsetY' in $$props) $$invalidate(25, offsetY = $$props.offsetY);
-		if ('charPixelWidth' in $$props) $$invalidate(26, charPixelWidth = $$props.charPixelWidth);
-		if ('tickMap' in $$props) $$invalidate(8, tickMap = $$props.tickMap);
-		if ('axisLine' in $$props) $$invalidate(9, axisLine = $$props.axisLine);
-		if ('offSet' in $$props) $$invalidate(10, offSet = $$props.offSet);
-	};
-
-	$$self.$$.update = () => {
-		if ($$self.$$.dirty[0] & /*$yScale*/ 8192) {
-			$$invalidate(27, isBandwidth = typeof $yScale.bandwidth === 'function');
-		}
-
-		if ($$self.$$.dirty[0] & /*ticks, isBandwidth, $yScale*/ 142614528) {
-			$$invalidate(11, tickVals = Array.isArray(ticks)
-			? ticks
-			: isBandwidth
-				? $yScale.domain()
-				: typeof ticks === 'function'
-					? ticks($yScale.ticks())
-					: $yScale.ticks(ticks));
-		}
-
-		if ($$self.$$.dirty[0] & /*tickVals, format*/ 2080) {
-			$$invalidate(28, widestTickLen = Math.max(10, Math.max(...tickVals.map(d => format(d).toString().split('').reduce(calcStringLength, 0)))));
-		}
-
-		if ($$self.$$.dirty[0] & /*tickMarks, labelPosition, tickMarkLength, widestTickLen*/ 272629765) {
-			$$invalidate(12, tickLen = tickMarks === true
-			? labelPosition === 'above'
-				? tickMarkLength ?? widestTickLen
-				: tickMarkLength ?? 6
-			: 0);
-		}
-
-		if ($$self.$$.dirty[0] & /*tickGutter, labelPosition, widestTickLen, tickLen*/ 285216772) {
-			$$invalidate(16, x1 = -tickGutter - (labelPosition === 'above' ? widestTickLen : tickLen));
-		}
-
-		if ($$self.$$.dirty[0] & /*isBandwidth, $yScale*/ 134225920) {
-			$$invalidate(15, y = isBandwidth ? $yScale.bandwidth() / 2 : 0);
-		}
-
-		if ($$self.$$.dirty[0] & /*tickVals, $yScale*/ 10240) {
-			$$invalidate(14, maxTickValPx = Math.max(...tickVals.map($yScale)));
-		}
-	};
-
-	return [
-		tickMarks,
-		tickLabel,
-		labelPosition,
-		snapBaselineLabel,
-		gridlines,
-		format,
-		dx,
-		dy,
-		tickMap,
-		axisLine,
-		offSet,
-		tickVals,
-		tickLen,
-		$yScale,
-		maxTickValPx,
-		y,
-		x1,
-		$xRange,
-		$width,
-		xRange,
-		yScale,
-		width,
-		tickMarkLength,
-		ticks,
-		tickGutter,
-		offsetY,
-		charPixelWidth,
-		isBandwidth,
-		widestTickLen
-	];
-}
-
-class AxisY extends SvelteComponent {
-	constructor(options) {
-		super();
-
-		init(
-			this,
-			options,
-			instance$4,
-			create_fragment$3,
-			safe_not_equal,
-			{
-				tickMarks: 0,
-				tickLabel: 1,
-				labelPosition: 2,
-				snapBaselineLabel: 3,
-				gridlines: 4,
-				tickMarkLength: 22,
-				format: 5,
-				ticks: 23,
-				tickGutter: 24,
-				dx: 6,
-				dy: 7,
-				offsetY: 25,
-				charPixelWidth: 26,
-				tickMap: 8,
-				axisLine: 9,
-				offSet: 10
-			},
-			add_css$2,
-			[-1, -1]
-		);
-	}
-}
-
 /**
  * @param {any} obj
  * @returns {boolean}
@@ -6780,7 +5862,7 @@ function tweened(value, defaults = {}) {
 		let {
 			delay = 0,
 			duration = 400,
-			easing = identity$4,
+			easing = identity$3,
 			interpolate = get_interpolator
 		} = assign(assign({}, defaults), opts);
 		if (duration === 0) {
@@ -6822,219 +5904,62 @@ function tweened(value, defaults = {}) {
 	};
 }
 
-/* src/routes/seqplot/stream/Curve.canvas.svelte generated by Svelte v4.2.9 */
-
-function instance$3($$self, $$props, $$invalidate) {
-	let $yScale;
-	let $xScale;
-	const { data, x, width, height, xScale, xGet, y, yGet, yScale, zScale } = getContext('LayerCake');
-	component_subscribe($$self, xScale, value => $$invalidate(6, $xScale = value));
-	component_subscribe($$self, yScale, value => $$invalidate(5, $yScale = value));
-	let { row = [] } = $$props;
-	let { strokeStyle = 'rgb(255,0,0,0.1 )' } = $$props;
-	let { a = 0 } = $$props;
-	let item = drawLine;
-	getContext('canvas').addItem(item);
-
-	function drawLine(ctx) {
-		ctx.save();
-		let k = row;
-		let _k = (1 - a) / 6;
-		ctx.strokeStyle = strokeStyle;
-		let _x, _y, _x0, _x1, _x2, _y0, _y1, _y2;
-
-		/* round zero: initialize */
-		_x = $xScale(k[0].x);
-
-		_y = $yScale(k[0].y);
-		ctx.beginPath();
-		ctx.moveTo(_x, _y);
-		_x2 = _x;
-		_y2 = _y;
-
-		/* round one: past points */
-		_x = $xScale(k[0].x);
-
-		_y = $yScale(k[0].y);
-		(_x1 = _x, _y1 = _y);
-		(_x0 = _x1, _x1 = _x2, _x2 = _x);
-		(_y0 = _y1, _y1 = _y2, _y2 = _y);
-
-		k.forEach(d => {
-			_x = $xScale(d.x);
-			_y = $yScale(d.y);
-			ctx.bezierCurveTo(_x1 + _k * (_x2 - _x0), _y1 + _k * (_y2 - _y0), _x2 + _k * (_x1 - _x), _y2 + _k * (_y1 - _y), _x2, _y2);
-			(_x0 = _x1, _x1 = _x2, _x2 = _x);
-			(_y0 = _y1, _y1 = _y2, _y2 = _y);
-		});
-
-		//closing the last part
-		ctx.bezierCurveTo(_x1 + _k * (_x2 - _x0), _y1 + _k * (_y2 - _y0), _x2 + _k * (_x1 - _x1), _y2 + _k * (_y1 - _y1), _x2, _y2);
-
-		ctx.stroke();
-		ctx.restore();
-	}
-
-	$$self.$$set = $$props => {
-		if ('row' in $$props) $$invalidate(2, row = $$props.row);
-		if ('strokeStyle' in $$props) $$invalidate(3, strokeStyle = $$props.strokeStyle);
-		if ('a' in $$props) $$invalidate(4, a = $$props.a);
-	};
-
-	return [xScale, yScale, row, strokeStyle, a];
-}
-
-class Curve_canvas extends SvelteComponent {
-	constructor(options) {
-		super();
-		init(this, options, instance$3, null, safe_not_equal, { row: 2, strokeStyle: 3, a: 4 });
-	}
-}
-
 /* src/routes/seqplot/stream/CanvasController.svelte generated by Svelte v4.2.9 */
 
-function get_each_context$1(ctx, list, i) {
-	const child_ctx = ctx.slice();
-	child_ctx[21] = list[i];
-	return child_ctx;
-}
-
-// (48:0) {#if $ctx}
-function create_if_block$1(ctx) {
-	let each_blocks = [];
-	let each_1_lookup = new Map();
-	let each_1_anchor;
+function create_if_block$3(ctx) {
 	let current;
-	let each_value = ensure_array_like(/*$data*/ ctx[1]);
-	const get_key = ctx => /*row*/ ctx[21].id;
-
-	for (let i = 0; i < each_value.length; i += 1) {
-		let child_ctx = get_each_context$1(ctx, each_value, i);
-		let key = get_key(child_ctx);
-		each_1_lookup.set(key, each_blocks[i] = create_each_block$1(key, child_ctx));
-	}
+	const default_slot_template = /*#slots*/ ctx[10].default;
+	const default_slot = create_slot(default_slot_template, ctx, /*$$scope*/ ctx[9], null);
 
 	return {
 		c() {
-			for (let i = 0; i < each_blocks.length; i += 1) {
-				each_blocks[i].c();
-			}
-
-			each_1_anchor = empty();
+			if (default_slot) default_slot.c();
 		},
 		l(nodes) {
-			for (let i = 0; i < each_blocks.length; i += 1) {
-				each_blocks[i].l(nodes);
-			}
-
-			each_1_anchor = empty();
+			if (default_slot) default_slot.l(nodes);
 		},
 		m(target, anchor) {
-			for (let i = 0; i < each_blocks.length; i += 1) {
-				if (each_blocks[i]) {
-					each_blocks[i].m(target, anchor);
-				}
+			if (default_slot) {
+				default_slot.m(target, anchor);
 			}
 
-			insert_hydration(target, each_1_anchor, anchor);
 			current = true;
 		},
 		p(ctx, dirty) {
-			if (dirty & /*$y, $data*/ 6) {
-				each_value = ensure_array_like(/*$data*/ ctx[1]);
-				group_outros();
-				each_blocks = update_keyed_each(each_blocks, dirty, get_key, 1, ctx, each_value, each_1_lookup, each_1_anchor.parentNode, outro_and_destroy_block, create_each_block$1, each_1_anchor, get_each_context$1);
-				check_outros();
+			if (default_slot) {
+				if (default_slot.p && (!current || dirty & /*$$scope*/ 512)) {
+					update_slot_base(
+						default_slot,
+						default_slot_template,
+						ctx,
+						/*$$scope*/ ctx[9],
+						!current
+						? get_all_dirty_from_scope(/*$$scope*/ ctx[9])
+						: get_slot_changes(default_slot_template, /*$$scope*/ ctx[9], dirty, null),
+						null
+					);
+				}
 			}
 		},
 		i(local) {
 			if (current) return;
-
-			for (let i = 0; i < each_value.length; i += 1) {
-				transition_in(each_blocks[i]);
-			}
-
+			transition_in(default_slot, local);
 			current = true;
 		},
 		o(local) {
-			for (let i = 0; i < each_blocks.length; i += 1) {
-				transition_out(each_blocks[i]);
-			}
-
+			transition_out(default_slot, local);
 			current = false;
 		},
 		d(detaching) {
-			if (detaching) {
-				detach(each_1_anchor);
-			}
-
-			for (let i = 0; i < each_blocks.length; i += 1) {
-				each_blocks[i].d(detaching);
-			}
+			if (default_slot) default_slot.d(detaching);
 		}
 	};
 }
 
-// (49:2) {#each $data as row (row.id )}
-function create_each_block$1(key_1, ctx) {
-	let first;
-	let curve;
-	let current;
-
-	curve = new Curve_canvas({
-			props: { row: /*$y*/ ctx[2](/*row*/ ctx[21]) }
-		});
-
-	return {
-		key: key_1,
-		first: null,
-		c() {
-			first = empty();
-			create_component(curve.$$.fragment);
-			this.h();
-		},
-		l(nodes) {
-			first = empty();
-			claim_component(curve.$$.fragment, nodes);
-			this.h();
-		},
-		h() {
-			this.first = first;
-		},
-		m(target, anchor) {
-			insert_hydration(target, first, anchor);
-			mount_component(curve, target, anchor);
-			current = true;
-		},
-		p(new_ctx, dirty) {
-			ctx = new_ctx;
-			const curve_changes = {};
-			if (dirty & /*$y, $data*/ 6) curve_changes.row = /*$y*/ ctx[2](/*row*/ ctx[21]);
-			curve.$set(curve_changes);
-		},
-		i(local) {
-			if (current) return;
-			transition_in(curve.$$.fragment, local);
-			current = true;
-		},
-		o(local) {
-			transition_out(curve.$$.fragment, local);
-			current = false;
-		},
-		d(detaching) {
-			if (detaching) {
-				detach(first);
-			}
-
-			destroy_component(curve, detaching);
-		}
-	};
-}
-
-function create_fragment$2(ctx) {
+function create_fragment$4(ctx) {
 	let if_block_anchor;
 	let current;
-	let if_block = /*$ctx*/ ctx[0] && create_if_block$1(ctx);
+	let if_block = /*$ctx*/ ctx[0] && create_if_block$3(ctx);
 
 	return {
 		c() {
@@ -7059,7 +5984,7 @@ function create_fragment$2(ctx) {
 						transition_in(if_block, 1);
 					}
 				} else {
-					if_block = create_if_block$1(ctx);
+					if_block = create_if_block$3(ctx);
 					if_block.c();
 					transition_in(if_block, 1);
 					if_block.m(if_block_anchor.parentNode, if_block_anchor);
@@ -7093,19 +6018,22 @@ function create_fragment$2(ctx) {
 	};
 }
 
-function instance$2($$self, $$props, $$invalidate) {
+function instance$5($$self, $$props, $$invalidate) {
 	let $ctx;
 	let $height;
 	let $width;
-	let $data;
-	let $y;
-	const { data, x, width, height, xScale, xGet, y, yGet, yScale, zScale } = getContext('LayerCake');
-	component_subscribe($$self, data, value => $$invalidate(1, $data = value));
-	component_subscribe($$self, width, value => $$invalidate(10, $width = value));
-	component_subscribe($$self, height, value => $$invalidate(9, $height = value));
-	component_subscribe($$self, y, value => $$invalidate(2, $y = value));
+	let $xScale;
+	let $yScale;
+	let { $$slots: slots = {}, $$scope } = $$props;
+	const { width, height } = getContext('LayerCake');
+	component_subscribe($$self, width, value => $$invalidate(13, $width = value));
+	component_subscribe($$self, height, value => $$invalidate(12, $height = value));
 	const { ctx } = getContext('canvas');
 	component_subscribe($$self, ctx, value => $$invalidate(0, $ctx = value));
+	const { yScale, xScale } = getContext('LayerCake');
+	component_subscribe($$self, yScale, value => $$invalidate(8, $yScale = value));
+	component_subscribe($$self, xScale, value => $$invalidate(7, $xScale = value));
+	let { innerPadding = [0, 0, 0, 0] } = $$props;
 	let items = new Set();
 	let scheduled = false;
 	setContext("canvas", { addItem });
@@ -7113,11 +6041,7 @@ function instance$2($$self, $$props, $$invalidate) {
 	function addItem(fn) {
 		onMount(() => {
 			items.add(fn);
-
-			return () => {
-				console.log("deleted");
-				return items.delete(fn);
-			};
+			return () => items.delete(fn);
 		}); //canvas lines become components. When svelte unmounts them they are deleted
 
 		afterUpdate(async () => {
@@ -7137,36 +6061,173 @@ function instance$2($$self, $$props, $$invalidate) {
 	function draw() {
 		scaleCanvas($ctx, $width, $height);
 		$ctx.clearRect(0, 0, $width, $height);
-
-		//items.forEach(fn => fn($ctx));
 		items.forEach(fn => fn($ctx));
 	}
 
-	return [$ctx, $data, $y, data, width, height, y, ctx];
+	$$self.$$set = $$props => {
+		if ('innerPadding' in $$props) $$invalidate(6, innerPadding = $$props.innerPadding);
+		if ('$$scope' in $$props) $$invalidate(9, $$scope = $$props.$$scope);
+	};
+
+	$$self.$$.update = () => {
+		if ($$self.$$.dirty & /*$yScale, innerPadding*/ 320) {
+			if ($yScale) {
+				let [y1, y0] = $yScale.range();
+				$yScale.range([y1 - innerPadding[2], y0 + innerPadding[0]]);
+			}
+		}
+
+		if ($$self.$$.dirty & /*$xScale, innerPadding*/ 192) {
+			if ($xScale) {
+				let [x0, x1] = $xScale.range();
+				$xScale.range([x0 + innerPadding[3], x1 + $xScale.bandwidth() - innerPadding[1]]);
+			}
+		}
+	};
+
+	return [
+		$ctx,
+		width,
+		height,
+		ctx,
+		yScale,
+		xScale,
+		innerPadding,
+		$xScale,
+		$yScale,
+		$$scope,
+		slots
+	];
 }
 
 class CanvasController extends SvelteComponent {
 	constructor(options) {
 		super();
-		init(this, options, instance$2, create_fragment$2, safe_not_equal, {});
+		init(this, options, instance$5, create_fragment$4, safe_not_equal, { innerPadding: 6 });
+	}
+}
+
+/* src/routes/seqplot/stream/Curve.canvas.svelte generated by Svelte v4.2.9 */
+
+function instance$4($$self, $$props, $$invalidate) {
+	let $yScale;
+	let $xScale;
+	const { xScale, yScale } = getContext('LayerCake');
+	component_subscribe($$self, xScale, value => $$invalidate(9, $xScale = value));
+	component_subscribe($$self, yScale, value => $$invalidate(8, $yScale = value));
+	let { row = [] } = $$props;
+	let { strokeStyle = 'rgb(0,0,0)' } = $$props;
+	let { a = 0 } = $$props;
+	let { alpha = 1 } = $$props;
+	let { fillStyle = 'rgb(200,0,0,0.2)' } = $$props;
+	let { closed = false } = $$props;
+	let item = drawLine;
+	getContext('canvas').addItem(item);
+
+	function drawLine(ctx) {
+		ctx.save();
+		let k = row;
+		let _k = (1 - a) / 6;
+		ctx.strokeStyle = strokeStyle;
+		ctx.globalAlpha = alpha;
+		ctx.fillStyle = fillStyle;
+		let _x, _y, _x0, _x1, _x2, _y0, _y1, _y2;
+		let open = false;
+
+		k.forEach((d, i) => {
+			_x = $xScale(d.x);
+			_y = $yScale(d.y);
+
+			switch (true) {
+				case open == false && !!_y:
+					open = true;
+					ctx.beginPath();
+					//start path at first point
+					//initialize values for shifting
+					ctx.moveTo(_x, _y);
+					_x2 = _x;
+					_y2 = _y;
+					(_x1 = _x, _y1 = _y);
+					break;
+				case k.length == i + 1:
+					open = false;
+					(_x0 = _x1, _x1 = _x2, _x2 = _x);
+					(_y0 = _y1, _y1 = _y2, _y2 = _y);
+					drawPoint();
+					ctx.stroke();
+					if (closed) {
+						ctx.closePath();
+						ctx.fill();
+					}
+					break;
+				case open && !!_y:
+					drawPoint();
+					break;
+				case open && !_y:
+					_x = _x2;
+					_y = _y2;
+					(_x0 = _x1, _x1 = _x2, _x2 = _x);
+					(_y0 = _y1, _y1 = _y2, _y2 = _y);
+					drawPoint();
+					ctx.stroke();
+					if (closed) {
+						ctx.closePath();
+						ctx.fill();
+					}
+					open = false;
+			}
+
+			(_x0 = _x1, _x1 = _x2, _x2 = _x);
+			(_y0 = _y1, _y1 = _y2, _y2 = _y);
+		});
+
+		function drawPoint() {
+			ctx.bezierCurveTo(_x1 + _k * (_x2 - _x0), _y1 + _k * (_y2 - _y0), _x2 + _k * (_x1 - _x), _y2 + _k * (_y1 - _y), _x2, _y2);
+		}
+	}
+
+	$$self.$$set = $$props => {
+		if ('row' in $$props) $$invalidate(2, row = $$props.row);
+		if ('strokeStyle' in $$props) $$invalidate(3, strokeStyle = $$props.strokeStyle);
+		if ('a' in $$props) $$invalidate(4, a = $$props.a);
+		if ('alpha' in $$props) $$invalidate(5, alpha = $$props.alpha);
+		if ('fillStyle' in $$props) $$invalidate(6, fillStyle = $$props.fillStyle);
+		if ('closed' in $$props) $$invalidate(7, closed = $$props.closed);
+	};
+
+	return [xScale, yScale, row, strokeStyle, a, alpha, fillStyle, closed];
+}
+
+class Curve_canvas extends SvelteComponent {
+	constructor(options) {
+		super();
+
+		init(this, options, instance$4, null, safe_not_equal, {
+			row: 2,
+			strokeStyle: 3,
+			a: 4,
+			alpha: 5,
+			fillStyle: 6,
+			closed: 7
+		});
 	}
 }
 
 /* src/routes/seqplot/stream/AxisX.svelte generated by Svelte v4.2.9 */
 
-function add_css$1(target) {
-	append_styles(target, "svelte-wr6453", ".tick.svelte-wr6453.svelte-wr6453{font-size:0.725em;font-weight:200}line.svelte-wr6453.svelte-wr6453,.tick.svelte-wr6453 line.svelte-wr6453{stroke:#aaa;stroke-dasharray:2}.tick.svelte-wr6453 text.svelte-wr6453{fill:#666}.tick.svelte-wr6453 .tick-mark.svelte-wr6453,.baseline.svelte-wr6453.svelte-wr6453{stroke-dasharray:0}.axis.snapTicks.svelte-wr6453 .tick:last-child text.svelte-wr6453{transform:translateX(3px)}.axis.snapTicks.svelte-wr6453 .tick.tick-0 text.svelte-wr6453{transform:translateX(-3px)}");
+function add_css$2(target) {
+	append_styles(target, "svelte-1kmupzr", ".tick.svelte-1kmupzr.svelte-1kmupzr{font-size:1em;font-weight:200}line.svelte-1kmupzr.svelte-1kmupzr,.tick.svelte-1kmupzr line.svelte-1kmupzr{stroke:#aaa;stroke-dasharray:0;stroke-width:0.5}.tick.svelte-1kmupzr text.svelte-1kmupzr{fill:#666}.tick.svelte-1kmupzr .tick-mark.svelte-1kmupzr,.baseline.svelte-1kmupzr.svelte-1kmupzr{stroke-dasharray:0}.axis.snapTicks.svelte-1kmupzr .tick:last-child text.svelte-1kmupzr{transform:translateX(3px)}.axis.snapTicks.svelte-1kmupzr .tick.tick-0 text.svelte-1kmupzr{transform:translateX(-3px)}");
 }
 
-function get_each_context(ctx, list, i) {
+function get_each_context$2(ctx, list, i) {
 	const child_ctx = ctx.slice();
-	child_ctx[19] = list[i];
-	child_ctx[21] = i;
+	child_ctx[21] = list[i];
+	child_ctx[23] = i;
 	return child_ctx;
 }
 
-// (58:6) {#if gridlines !== false}
-function create_if_block_2(ctx) {
+// (66:6) {#if gridlines !== false}
+function create_if_block_2$1(ctx) {
 	let line;
 	let line_y__value;
 
@@ -7188,8 +6249,8 @@ function create_if_block_2(ctx) {
 			this.h();
 		},
 		h() {
-			attr(line, "class", "gridline svelte-wr6453");
-			attr(line, "y1", line_y__value = /*$height*/ ctx[11] * -1);
+			attr(line, "class", "gridline svelte-1kmupzr");
+			attr(line, "y1", line_y__value = /*$height*/ ctx[13] * -1);
 			attr(line, "y2", "0");
 			attr(line, "x1", "0");
 			attr(line, "x2", "0");
@@ -7198,7 +6259,7 @@ function create_if_block_2(ctx) {
 			insert_hydration(target, line, anchor);
 		},
 		p(ctx, dirty) {
-			if (dirty & /*$height*/ 2048 && line_y__value !== (line_y__value = /*$height*/ ctx[11] * -1)) {
+			if (dirty & /*$height*/ 8192 && line_y__value !== (line_y__value = /*$height*/ ctx[13] * -1)) {
 				attr(line, "y1", line_y__value);
 			}
 		},
@@ -7210,8 +6271,8 @@ function create_if_block_2(ctx) {
 	};
 }
 
-// (61:6) {#if tickMarks === true}
-function create_if_block_1(ctx) {
+// (69:6) {#if tickMarks === true}
+function create_if_block_1$1(ctx) {
 	let line;
 	let line_x__value;
 	let line_x__value_1;
@@ -7234,31 +6295,39 @@ function create_if_block_1(ctx) {
 			this.h();
 		},
 		h() {
-			attr(line, "class", "tick-mark svelte-wr6453");
+			attr(line, "class", "tick-mark svelte-1kmupzr");
 			attr(line, "y1", 0);
 			attr(line, "y2", 6);
 
-			attr(line, "x1", line_x__value = /*isBandwidth*/ ctx[7]
-			? /*$xScale*/ ctx[8].bandwidth() / 2
-			: 0);
+			attr(line, "x1", line_x__value = /*isBandwidth*/ ctx[9] && /*align*/ ctx[8] == 'center'
+			? /*$xScale*/ ctx[10].bandwidth() / 2
+			: /*isBandwidth*/ ctx[9] && /*align*/ ctx[8] == 'right'
+				? /*$xScale*/ ctx[10].bandwidth()
+				: 0);
 
-			attr(line, "x2", line_x__value_1 = /*isBandwidth*/ ctx[7]
-			? /*$xScale*/ ctx[8].bandwidth() / 2
-			: 0);
+			attr(line, "x2", line_x__value_1 = /*isBandwidth*/ ctx[9] && /*align*/ ctx[8] == 'center'
+			? /*$xScale*/ ctx[10].bandwidth() / 2
+			: /*isBandwidth*/ ctx[9] && /*align*/ ctx[8] == 'right'
+				? /*$xScale*/ ctx[10].bandwidth()
+				: 0);
 		},
 		m(target, anchor) {
 			insert_hydration(target, line, anchor);
 		},
 		p(ctx, dirty) {
-			if (dirty & /*isBandwidth, $xScale*/ 384 && line_x__value !== (line_x__value = /*isBandwidth*/ ctx[7]
-			? /*$xScale*/ ctx[8].bandwidth() / 2
-			: 0)) {
+			if (dirty & /*isBandwidth, align, $xScale*/ 1792 && line_x__value !== (line_x__value = /*isBandwidth*/ ctx[9] && /*align*/ ctx[8] == 'center'
+			? /*$xScale*/ ctx[10].bandwidth() / 2
+			: /*isBandwidth*/ ctx[9] && /*align*/ ctx[8] == 'right'
+				? /*$xScale*/ ctx[10].bandwidth()
+				: 0)) {
 				attr(line, "x1", line_x__value);
 			}
 
-			if (dirty & /*isBandwidth, $xScale*/ 384 && line_x__value_1 !== (line_x__value_1 = /*isBandwidth*/ ctx[7]
-			? /*$xScale*/ ctx[8].bandwidth() / 2
-			: 0)) {
+			if (dirty & /*isBandwidth, align, $xScale*/ 1792 && line_x__value_1 !== (line_x__value_1 = /*isBandwidth*/ ctx[9] && /*align*/ ctx[8] == 'center'
+			? /*$xScale*/ ctx[10].bandwidth() / 2
+			: /*isBandwidth*/ ctx[9] && /*align*/ ctx[8] == 'right'
+				? /*$xScale*/ ctx[10].bandwidth()
+				: 0)) {
 				attr(line, "x2", line_x__value_1);
 			}
 		},
@@ -7270,19 +6339,23 @@ function create_if_block_1(ctx) {
 	};
 }
 
-// (56:2) {#each tickVals as tick, i (tick)}
-function create_each_block(key_1, ctx) {
+// (64:2) {#each tickVals as tick, i (tick)}
+function create_each_block$2(key_1, ctx) {
 	let g;
 	let if_block0_anchor;
 	let text_1;
-	let t_value = /*formatTick*/ ctx[4](/*tick*/ ctx[19]) + "";
+
+	let t_value = (/*tickMap*/ ctx[7]
+	? /*tickMap*/ ctx[7].get(/*tick*/ ctx[21])
+	: /*formatTick*/ ctx[4](/*tick*/ ctx[21])) + "";
+
 	let t;
 	let text_1_x_value;
 	let text_1_text_anchor_value;
 	let g_class_value;
 	let g_transform_value;
-	let if_block0 = /*gridlines*/ ctx[0] !== false && create_if_block_2(ctx);
-	let if_block1 = /*tickMarks*/ ctx[1] === true && create_if_block_1(ctx);
+	let if_block0 = /*gridlines*/ ctx[0] !== false && create_if_block_2$1(ctx);
+	let if_block1 = /*tickMarks*/ ctx[1] === true && create_if_block_1$1(ctx);
 
 	return {
 		key: key_1,
@@ -7319,17 +6392,21 @@ function create_each_block(key_1, ctx) {
 			this.h();
 		},
 		h() {
-			attr(text_1, "x", text_1_x_value = /*isBandwidth*/ ctx[7]
-			? +/*xTick*/ ctx[5]
-			: /*xTick*/ ctx[5]);
+			attr(text_1, "x", text_1_x_value = /*isBandwidth*/ ctx[9] && /*align*/ ctx[8] == 'center'
+			? /*$xScale*/ ctx[10].bandwidth() / 2
+			: /*isBandwidth*/ ctx[9] && /*align*/ ctx[8] == 'right'
+				? /*$xScale*/ ctx[10].bandwidth()
+				: /*isBandwidth*/ ctx[9] && /*align*/ ctx[8] == 'right'
+					? 0
+					: /*xTick*/ ctx[5]);
 
 			attr(text_1, "y", /*yTick*/ ctx[6]);
 			attr(text_1, "dx", "");
 			attr(text_1, "dy", "");
-			attr(text_1, "text-anchor", text_1_text_anchor_value = /*textAnchor*/ ctx[17](/*i*/ ctx[21]));
-			attr(text_1, "class", "svelte-wr6453");
-			attr(g, "class", g_class_value = "tick tick-" + /*i*/ ctx[21] + " svelte-wr6453");
-			attr(g, "transform", g_transform_value = "translate(" + /*$xScale*/ ctx[8](/*tick*/ ctx[19]) + "," + Math.max(.../*$yRange*/ ctx[10]) + ")");
+			attr(text_1, "text-anchor", text_1_text_anchor_value = /*textAnchor*/ ctx[19](/*i*/ ctx[23]));
+			attr(text_1, "class", "svelte-1kmupzr");
+			attr(g, "class", g_class_value = "tick tick-" + /*i*/ ctx[23] + " svelte-1kmupzr");
+			attr(g, "transform", g_transform_value = "translate(" + /*$xScale*/ ctx[10](/*tick*/ ctx[21]) + "," + Math.max(.../*$yRange*/ ctx[12]) + ")");
 			this.first = g;
 		},
 		m(target, anchor) {
@@ -7347,7 +6424,7 @@ function create_each_block(key_1, ctx) {
 				if (if_block0) {
 					if_block0.p(ctx, dirty);
 				} else {
-					if_block0 = create_if_block_2(ctx);
+					if_block0 = create_if_block_2$1(ctx);
 					if_block0.c();
 					if_block0.m(g, if_block0_anchor);
 				}
@@ -7360,7 +6437,7 @@ function create_each_block(key_1, ctx) {
 				if (if_block1) {
 					if_block1.p(ctx, dirty);
 				} else {
-					if_block1 = create_if_block_1(ctx);
+					if_block1 = create_if_block_1$1(ctx);
 					if_block1.c();
 					if_block1.m(g, text_1);
 				}
@@ -7369,11 +6446,17 @@ function create_each_block(key_1, ctx) {
 				if_block1 = null;
 			}
 
-			if (dirty & /*formatTick, tickVals*/ 528 && t_value !== (t_value = /*formatTick*/ ctx[4](/*tick*/ ctx[19]) + "")) set_data(t, t_value);
+			if (dirty & /*tickMap, tickVals, formatTick*/ 2192 && t_value !== (t_value = (/*tickMap*/ ctx[7]
+			? /*tickMap*/ ctx[7].get(/*tick*/ ctx[21])
+			: /*formatTick*/ ctx[4](/*tick*/ ctx[21])) + "")) set_data(t, t_value);
 
-			if (dirty & /*isBandwidth, xTick*/ 160 && text_1_x_value !== (text_1_x_value = /*isBandwidth*/ ctx[7]
-			? +/*xTick*/ ctx[5]
-			: /*xTick*/ ctx[5])) {
+			if (dirty & /*isBandwidth, align, $xScale, xTick*/ 1824 && text_1_x_value !== (text_1_x_value = /*isBandwidth*/ ctx[9] && /*align*/ ctx[8] == 'center'
+			? /*$xScale*/ ctx[10].bandwidth() / 2
+			: /*isBandwidth*/ ctx[9] && /*align*/ ctx[8] == 'right'
+				? /*$xScale*/ ctx[10].bandwidth()
+				: /*isBandwidth*/ ctx[9] && /*align*/ ctx[8] == 'right'
+					? 0
+					: /*xTick*/ ctx[5])) {
 				attr(text_1, "x", text_1_x_value);
 			}
 
@@ -7381,15 +6464,15 @@ function create_each_block(key_1, ctx) {
 				attr(text_1, "y", /*yTick*/ ctx[6]);
 			}
 
-			if (dirty & /*tickVals*/ 512 && text_1_text_anchor_value !== (text_1_text_anchor_value = /*textAnchor*/ ctx[17](/*i*/ ctx[21]))) {
+			if (dirty & /*tickVals*/ 2048 && text_1_text_anchor_value !== (text_1_text_anchor_value = /*textAnchor*/ ctx[19](/*i*/ ctx[23]))) {
 				attr(text_1, "text-anchor", text_1_text_anchor_value);
 			}
 
-			if (dirty & /*tickVals*/ 512 && g_class_value !== (g_class_value = "tick tick-" + /*i*/ ctx[21] + " svelte-wr6453")) {
+			if (dirty & /*tickVals*/ 2048 && g_class_value !== (g_class_value = "tick tick-" + /*i*/ ctx[23] + " svelte-1kmupzr")) {
 				attr(g, "class", g_class_value);
 			}
 
-			if (dirty & /*$xScale, tickVals, $yRange*/ 1792 && g_transform_value !== (g_transform_value = "translate(" + /*$xScale*/ ctx[8](/*tick*/ ctx[19]) + "," + Math.max(.../*$yRange*/ ctx[10]) + ")")) {
+			if (dirty & /*$xScale, tickVals, $yRange*/ 7168 && g_transform_value !== (g_transform_value = "translate(" + /*$xScale*/ ctx[10](/*tick*/ ctx[21]) + "," + Math.max(.../*$yRange*/ ctx[12]) + ")")) {
 				attr(g, "transform", g_transform_value);
 			}
 		},
@@ -7404,8 +6487,8 @@ function create_each_block(key_1, ctx) {
 	};
 }
 
-// (79:2) {#if baseline === true}
-function create_if_block(ctx) {
+// (90:2) {#if baseline === true}
+function create_if_block$2(ctx) {
 	let line;
 	let line_y__value;
 	let line_y__value_1;
@@ -7428,26 +6511,26 @@ function create_if_block(ctx) {
 			this.h();
 		},
 		h() {
-			attr(line, "class", "baseline svelte-wr6453");
-			attr(line, "y1", line_y__value = /*$height*/ ctx[11] + 0.5);
-			attr(line, "y2", line_y__value_1 = /*$height*/ ctx[11] + 0.5);
+			attr(line, "class", "baseline svelte-1kmupzr");
+			attr(line, "y1", line_y__value = /*$height*/ ctx[13] + 0.5);
+			attr(line, "y2", line_y__value_1 = /*$height*/ ctx[13] + 0.5);
 			attr(line, "x1", "0");
-			attr(line, "x2", /*$width*/ ctx[12]);
+			attr(line, "x2", /*$width*/ ctx[14]);
 		},
 		m(target, anchor) {
 			insert_hydration(target, line, anchor);
 		},
 		p(ctx, dirty) {
-			if (dirty & /*$height*/ 2048 && line_y__value !== (line_y__value = /*$height*/ ctx[11] + 0.5)) {
+			if (dirty & /*$height*/ 8192 && line_y__value !== (line_y__value = /*$height*/ ctx[13] + 0.5)) {
 				attr(line, "y1", line_y__value);
 			}
 
-			if (dirty & /*$height*/ 2048 && line_y__value_1 !== (line_y__value_1 = /*$height*/ ctx[11] + 0.5)) {
+			if (dirty & /*$height*/ 8192 && line_y__value_1 !== (line_y__value_1 = /*$height*/ ctx[13] + 0.5)) {
 				attr(line, "y2", line_y__value_1);
 			}
 
-			if (dirty & /*$width*/ 4096) {
-				attr(line, "x2", /*$width*/ ctx[12]);
+			if (dirty & /*$width*/ 16384) {
+				attr(line, "x2", /*$width*/ ctx[14]);
 			}
 		},
 		d(detaching) {
@@ -7458,21 +6541,21 @@ function create_if_block(ctx) {
 	};
 }
 
-function create_fragment$1(ctx) {
+function create_fragment$3(ctx) {
 	let g;
 	let each_blocks = [];
 	let each_1_lookup = new Map();
 	let each_1_anchor;
-	let each_value = ensure_array_like(/*tickVals*/ ctx[9]);
-	const get_key = ctx => /*tick*/ ctx[19];
+	let each_value = ensure_array_like(/*tickVals*/ ctx[11]);
+	const get_key = ctx => /*tick*/ ctx[21];
 
 	for (let i = 0; i < each_value.length; i += 1) {
-		let child_ctx = get_each_context(ctx, each_value, i);
+		let child_ctx = get_each_context$2(ctx, each_value, i);
 		let key = get_key(child_ctx);
-		each_1_lookup.set(key, each_blocks[i] = create_each_block(key, child_ctx));
+		each_1_lookup.set(key, each_blocks[i] = create_each_block$2(key, child_ctx));
 	}
 
-	let if_block = /*baseline*/ ctx[2] === true && create_if_block(ctx);
+	let if_block = /*baseline*/ ctx[2] === true && create_if_block$2(ctx);
 
 	return {
 		c() {
@@ -7500,7 +6583,7 @@ function create_fragment$1(ctx) {
 			this.h();
 		},
 		h() {
-			attr(g, "class", "axis x-axis svelte-wr6453");
+			attr(g, "class", "axis x-axis svelte-1kmupzr");
 			toggle_class(g, "snapTicks", /*snapTicks*/ ctx[3]);
 		},
 		m(target, anchor) {
@@ -7516,16 +6599,16 @@ function create_fragment$1(ctx) {
 			if (if_block) if_block.m(g, null);
 		},
 		p(ctx, [dirty]) {
-			if (dirty & /*tickVals, $xScale, Math, $yRange, isBandwidth, xTick, yTick, textAnchor, formatTick, tickMarks, $height, gridlines*/ 135155) {
-				each_value = ensure_array_like(/*tickVals*/ ctx[9]);
-				each_blocks = update_keyed_each(each_blocks, dirty, get_key, 1, ctx, each_value, each_1_lookup, g, destroy_block, create_each_block, each_1_anchor, get_each_context);
+			if (dirty & /*tickVals, $xScale, Math, $yRange, isBandwidth, align, xTick, yTick, textAnchor, tickMap, formatTick, tickMarks, $height, gridlines*/ 540659) {
+				each_value = ensure_array_like(/*tickVals*/ ctx[11]);
+				each_blocks = update_keyed_each(each_blocks, dirty, get_key, 1, ctx, each_value, each_1_lookup, g, destroy_block, create_each_block$2, each_1_anchor, get_each_context$2);
 			}
 
 			if (/*baseline*/ ctx[2] === true) {
 				if (if_block) {
 					if_block.p(ctx, dirty);
 				} else {
-					if_block = create_if_block(ctx);
+					if_block = create_if_block$2(ctx);
 					if_block.c();
 					if_block.m(g, null);
 				}
@@ -7554,7 +6637,7 @@ function create_fragment$1(ctx) {
 	};
 }
 
-function instance$1($$self, $$props, $$invalidate) {
+function instance$3($$self, $$props, $$invalidate) {
 	let isBandwidth;
 	let tickVals;
 	let $xScale;
@@ -7562,10 +6645,10 @@ function instance$1($$self, $$props, $$invalidate) {
 	let $height;
 	let $width;
 	const { width, height, xScale, yRange } = getContext('LayerCake');
-	component_subscribe($$self, width, value => $$invalidate(12, $width = value));
-	component_subscribe($$self, height, value => $$invalidate(11, $height = value));
-	component_subscribe($$self, xScale, value => $$invalidate(8, $xScale = value));
-	component_subscribe($$self, yRange, value => $$invalidate(10, $yRange = value));
+	component_subscribe($$self, width, value => $$invalidate(14, $width = value));
+	component_subscribe($$self, height, value => $$invalidate(13, $height = value));
+	component_subscribe($$self, xScale, value => $$invalidate(10, $xScale = value));
+	component_subscribe($$self, yRange, value => $$invalidate(12, $yRange = value));
 	let { gridlines = true } = $$props;
 	let { tickMarks = false } = $$props;
 	let { baseline = false } = $$props;
@@ -7574,6 +6657,8 @@ function instance$1($$self, $$props, $$invalidate) {
 	let { ticks = undefined } = $$props;
 	let { xTick = 0 } = $$props;
 	let { yTick = 16 } = $$props;
+	let { tickMap } = $$props;
+	let { align = 'center' } = $$props;
 
 	function textAnchor(i) {
 		if (snapTicks === true) {
@@ -7595,24 +6680,30 @@ function instance$1($$self, $$props, $$invalidate) {
 		if ('baseline' in $$props) $$invalidate(2, baseline = $$props.baseline);
 		if ('snapTicks' in $$props) $$invalidate(3, snapTicks = $$props.snapTicks);
 		if ('formatTick' in $$props) $$invalidate(4, formatTick = $$props.formatTick);
-		if ('ticks' in $$props) $$invalidate(18, ticks = $$props.ticks);
+		if ('ticks' in $$props) $$invalidate(20, ticks = $$props.ticks);
 		if ('xTick' in $$props) $$invalidate(5, xTick = $$props.xTick);
 		if ('yTick' in $$props) $$invalidate(6, yTick = $$props.yTick);
+		if ('tickMap' in $$props) $$invalidate(7, tickMap = $$props.tickMap);
+		if ('align' in $$props) $$invalidate(8, align = $$props.align);
 	};
 
 	$$self.$$.update = () => {
-		if ($$self.$$.dirty & /*$xScale*/ 256) {
-			$$invalidate(7, isBandwidth = typeof $xScale.bandwidth === 'function');
+		if ($$self.$$.dirty & /*$xScale*/ 1024) {
+			$$invalidate(9, isBandwidth = typeof $xScale.bandwidth === 'function');
 		}
 
-		if ($$self.$$.dirty & /*ticks, isBandwidth, $xScale*/ 262528) {
-			$$invalidate(9, tickVals = Array.isArray(ticks)
+		if ($$self.$$.dirty & /*ticks, isBandwidth, $xScale*/ 1050112) {
+			$$invalidate(11, tickVals = Array.isArray(ticks)
 			? ticks
 			: isBandwidth
 				? $xScale.domain()
 				: typeof ticks === 'function'
 					? ticks($xScale.ticks())
 					: $xScale.ticks(ticks));
+		}
+
+		if ($$self.$$.dirty & /*tickMap*/ 128) {
+			console.log(tickMap);
 		}
 	};
 
@@ -7624,6 +6715,8 @@ function instance$1($$self, $$props, $$invalidate) {
 		formatTick,
 		xTick,
 		yTick,
+		tickMap,
+		align,
 		isBandwidth,
 		$xScale,
 		tickVals,
@@ -7646,8 +6739,8 @@ class AxisX extends SvelteComponent {
 		init(
 			this,
 			options,
-			instance$1,
-			create_fragment$1,
+			instance$3,
+			create_fragment$3,
 			safe_not_equal,
 			{
 				gridlines: 0,
@@ -7655,26 +6748,1157 @@ class AxisX extends SvelteComponent {
 				baseline: 2,
 				snapTicks: 3,
 				formatTick: 4,
-				ticks: 18,
+				ticks: 20,
 				xTick: 5,
-				yTick: 6
+				yTick: 6,
+				tickMap: 7,
+				align: 8
 			},
-			add_css$1
+			add_css$2
 		);
 	}
 }
 
-/* src/routes/seqplot/stream/Stream.svelte generated by Svelte v4.2.9 */
+/* src/routes/seqplot/stream/Dodger.svelte generated by Svelte v4.2.9 */
+const get_default_slot_changes = dirty => ({ d: dirty & /*stack*/ 1 });
+const get_default_slot_context = ctx => ({ d: /*stack*/ ctx[0] });
 
-function add_css(target) {
-	append_styles(target, "svelte-1rhinkp", ".chart-container.svelte-1rhinkp{width:100%;height:700px}");
+function create_fragment$2(ctx) {
+	let current;
+	const default_slot_template = /*#slots*/ ctx[7].default;
+	const default_slot = create_slot(default_slot_template, ctx, /*$$scope*/ ctx[6], get_default_slot_context);
+
+	return {
+		c() {
+			if (default_slot) default_slot.c();
+		},
+		l(nodes) {
+			if (default_slot) default_slot.l(nodes);
+		},
+		m(target, anchor) {
+			if (default_slot) {
+				default_slot.m(target, anchor);
+			}
+
+			current = true;
+		},
+		p(ctx, [dirty]) {
+			if (default_slot) {
+				if (default_slot.p && (!current || dirty & /*$$scope, stack*/ 65)) {
+					update_slot_base(
+						default_slot,
+						default_slot_template,
+						ctx,
+						/*$$scope*/ ctx[6],
+						!current
+						? get_all_dirty_from_scope(/*$$scope*/ ctx[6])
+						: get_slot_changes(default_slot_template, /*$$scope*/ ctx[6], dirty, get_default_slot_changes),
+						get_default_slot_context
+					);
+				}
+			}
+		},
+		i(local) {
+			if (current) return;
+			transition_in(default_slot, local);
+			current = true;
+		},
+		o(local) {
+			transition_out(default_slot, local);
+			current = false;
+		},
+		d(detaching) {
+			if (default_slot) default_slot.d(detaching);
+		}
+	};
 }
 
-// (231:2) <Canvas>
+function instance$2($$self, $$props, $$invalidate) {
+	let $yScale;
+	let { $$slots: slots = {}, $$scope } = $$props;
+	const { xRange, yRange, yScale, width } = getContext('LayerCake');
+	component_subscribe($$self, yScale, value => $$invalidate(5, $yScale = value));
+	let { offSet = 0 } = $$props;
+	let { i = 0 } = $$props;
+	let { y = 0 } = $$props;
+	let { stack = [] } = $$props;
+
+	$$self.$$set = $$props => {
+		if ('offSet' in $$props) $$invalidate(2, offSet = $$props.offSet);
+		if ('i' in $$props) $$invalidate(3, i = $$props.i);
+		if ('y' in $$props) $$invalidate(4, y = $$props.y);
+		if ('stack' in $$props) $$invalidate(0, stack = $$props.stack);
+		if ('$$scope' in $$props) $$invalidate(6, $$scope = $$props.$$scope);
+	};
+
+	$$self.$$.update = () => {
+		if ($$self.$$.dirty & /*stack, $yScale, offSet*/ 37) {
+			{
+				$$invalidate(0, stack = stack.map(d => ({ d, coord: $yScale(d) })));
+
+				for (let i in stack) {
+					//die einträge gehen von oben nach unten
+					// d.h. die y-werte werden kleiner
+					// also sollte der jetzige wert kleiner sein als der vorausgehende
+					if (stack[i].coord + offSet > stack[i - 1]?.coord) $$invalidate(0, stack[i].coord = stack[i - 1]?.coord - offSet, stack);
+				}
+			}
+		}
+	};
+
+	return [stack, yScale, offSet, i, y, $yScale, $$scope, slots];
+}
+
+class Dodger extends SvelteComponent {
+	constructor(options) {
+		super();
+		init(this, options, instance$2, create_fragment$2, safe_not_equal, { offSet: 2, i: 3, y: 4, stack: 0 });
+	}
+}
+
+/* src/routes/seqplot/stream/AxisY.svelte generated by Svelte v4.2.9 */
+
+function add_css$1(target) {
+	append_styles(target, "svelte-sm4avn", ".tick.svelte-sm4avn.svelte-sm4avn{font-size:1em}.tick.svelte-sm4avn line.svelte-sm4avn{stroke:#aaa}.tick.svelte-sm4avn .gridline.svelte-sm4avn{stroke-dasharray:0;stroke-width:0.5}.tick.svelte-sm4avn text.svelte-sm4avn{fill:#666}.tick.tick-0.svelte-sm4avn line.svelte-sm4avn{stroke-dasharray:0}");
+}
+
+function get_each_context$1(ctx, list, i) {
+	const child_ctx = ctx.slice();
+	child_ctx[31] = list[i];
+	child_ctx[34] = i;
+	const constants_0 = /*$yScale*/ child_ctx[13](/*tick*/ child_ctx[31].d);
+	child_ctx[32] = constants_0;
+	return child_ctx;
+}
+
+// (88:2) {#if axisLine}
+function create_if_block_3(ctx) {
+	let line;
+	let line_y__value;
+	let line_y__value_1;
+
+	return {
+		c() {
+			line = svg_element("line");
+			this.h();
+		},
+		l(nodes) {
+			line = claim_svg_element(nodes, "line", {
+				x1: true,
+				x2: true,
+				y1: true,
+				y2: true,
+				style: true
+			});
+
+			children(line).forEach(detach);
+			this.h();
+		},
+		h() {
+			attr(line, "x1", /*x1*/ ctx[16]);
+			attr(line, "x2", /*x1*/ ctx[16]);
+			attr(line, "y1", line_y__value = /*tickVals*/ ctx[11].map(/*$yScale*/ ctx[13])[0]);
+			attr(line, "y2", line_y__value_1 = /*tickVals*/ ctx[11].map(/*$yScale*/ ctx[13])[/*tickVals*/ ctx[11].length - 1]);
+			set_style(line, "stroke-width", "1");
+			set_style(line, "stroke", "#aaa");
+		},
+		m(target, anchor) {
+			insert_hydration(target, line, anchor);
+		},
+		p(ctx, dirty) {
+			if (dirty[0] & /*x1*/ 65536) {
+				attr(line, "x1", /*x1*/ ctx[16]);
+			}
+
+			if (dirty[0] & /*x1*/ 65536) {
+				attr(line, "x2", /*x1*/ ctx[16]);
+			}
+
+			if (dirty[0] & /*tickVals, $yScale*/ 10240 && line_y__value !== (line_y__value = /*tickVals*/ ctx[11].map(/*$yScale*/ ctx[13])[0])) {
+				attr(line, "y1", line_y__value);
+			}
+
+			if (dirty[0] & /*tickVals, $yScale*/ 10240 && line_y__value_1 !== (line_y__value_1 = /*tickVals*/ ctx[11].map(/*$yScale*/ ctx[13])[/*tickVals*/ ctx[11].length - 1])) {
+				attr(line, "y2", line_y__value_1);
+			}
+		},
+		d(detaching) {
+			if (detaching) {
+				detach(line);
+			}
+		}
+	};
+}
+
+// (104:6) {#if gridlines === true}
+function create_if_block_2(ctx) {
+	let line;
+
+	return {
+		c() {
+			line = svg_element("line");
+			this.h();
+		},
+		l(nodes) {
+			line = claim_svg_element(nodes, "line", {
+				class: true,
+				x1: true,
+				x2: true,
+				y1: true,
+				y2: true
+			});
+
+			children(line).forEach(detach);
+			this.h();
+		},
+		h() {
+			attr(line, "class", "gridline svelte-sm4avn");
+			attr(line, "x1", /*x1*/ ctx[16]);
+			attr(line, "x2", /*$width*/ ctx[18]);
+			attr(line, "y1", /*y*/ ctx[15]);
+			attr(line, "y2", /*y*/ ctx[15]);
+		},
+		m(target, anchor) {
+			insert_hydration(target, line, anchor);
+		},
+		p(ctx, dirty) {
+			if (dirty[0] & /*x1*/ 65536) {
+				attr(line, "x1", /*x1*/ ctx[16]);
+			}
+
+			if (dirty[0] & /*$width*/ 262144) {
+				attr(line, "x2", /*$width*/ ctx[18]);
+			}
+
+			if (dirty[0] & /*y*/ 32768) {
+				attr(line, "y1", /*y*/ ctx[15]);
+			}
+
+			if (dirty[0] & /*y*/ 32768) {
+				attr(line, "y2", /*y*/ ctx[15]);
+			}
+		},
+		d(detaching) {
+			if (detaching) {
+				detach(line);
+			}
+		}
+	};
+}
+
+// (113:6) {#if tickMarks === true}
+function create_if_block_1(ctx) {
+	let line;
+	let line_x__value;
+	let line_y__value;
+
+	return {
+		c() {
+			line = svg_element("line");
+			this.h();
+		},
+		l(nodes) {
+			line = claim_svg_element(nodes, "line", {
+				class: true,
+				x1: true,
+				x2: true,
+				y1: true,
+				y2: true
+			});
+
+			children(line).forEach(detach);
+			this.h();
+		},
+		h() {
+			attr(line, "class", "tick-mark svelte-sm4avn");
+			attr(line, "x1", /*x1*/ ctx[16]);
+			attr(line, "x2", line_x__value = /*x1*/ ctx[16] + /*tickLen*/ ctx[12]);
+			attr(line, "y1", line_y__value = /*tick*/ ctx[31].coord - /*tickValPx*/ ctx[32]);
+			attr(line, "y2", /*y*/ ctx[15]);
+		},
+		m(target, anchor) {
+			insert_hydration(target, line, anchor);
+		},
+		p(ctx, dirty) {
+			if (dirty[0] & /*x1*/ 65536) {
+				attr(line, "x1", /*x1*/ ctx[16]);
+			}
+
+			if (dirty[0] & /*x1, tickLen*/ 69632 && line_x__value !== (line_x__value = /*x1*/ ctx[16] + /*tickLen*/ ctx[12])) {
+				attr(line, "x2", line_x__value);
+			}
+
+			if (dirty[0] & /*d, $yScale*/ 1073750016 && line_y__value !== (line_y__value = /*tick*/ ctx[31].coord - /*tickValPx*/ ctx[32])) {
+				attr(line, "y1", line_y__value);
+			}
+
+			if (dirty[0] & /*y*/ 32768) {
+				attr(line, "y2", /*y*/ ctx[15]);
+			}
+		},
+		d(detaching) {
+			if (detaching) {
+				detach(line);
+			}
+		}
+	};
+}
+
+// (122:6) {#if tickLabel === true}
+function create_if_block$1(ctx) {
+	let text_1;
+
+	let t_value = (/*tickMap*/ ctx[8]
+	? /*tickMap*/ ctx[8].get(/*tick*/ ctx[31].d)
+	: /*format*/ ctx[5](/*tick*/ ctx[31])) + "";
+
+	let t;
+	let text_1_y_value;
+	let text_1_dx_value;
+	let text_1_text_anchor_value;
+	let text_1_dy_value;
+
+	return {
+		c() {
+			text_1 = svg_element("text");
+			t = text(t_value);
+			this.h();
+		},
+		l(nodes) {
+			text_1 = claim_svg_element(nodes, "text", {
+				x: true,
+				y: true,
+				dx: true,
+				"text-anchor": true,
+				dy: true,
+				class: true
+			});
+
+			var text_1_nodes = children(text_1);
+			t = claim_text(text_1_nodes, t_value);
+			text_1_nodes.forEach(detach);
+			this.h();
+		},
+		h() {
+			attr(text_1, "x", /*x1*/ ctx[16]);
+			attr(text_1, "y", text_1_y_value = /*tick*/ ctx[31].coord - /*tickValPx*/ ctx[32]);
+			attr(text_1, "dx", text_1_dx_value = /*dx*/ ctx[6] + (/*labelPosition*/ ctx[2] === 'even' ? -3 : 0));
+			attr(text_1, "text-anchor", text_1_text_anchor_value = /*labelPosition*/ ctx[2] === 'above' ? 'start' : 'end');
+
+			attr(text_1, "dy", text_1_dy_value = /*dy*/ ctx[7] + (/*labelPosition*/ ctx[2] === 'above' || /*snapBaselineLabel*/ ctx[3] === true && /*tickValPx*/ ctx[32] === /*maxTickValPx*/ ctx[14]
+			? -3
+			: 4));
+
+			attr(text_1, "class", "svelte-sm4avn");
+		},
+		m(target, anchor) {
+			insert_hydration(target, text_1, anchor);
+			append_hydration(text_1, t);
+		},
+		p(ctx, dirty) {
+			if (dirty[0] & /*tickMap, d, format*/ 1073742112 && t_value !== (t_value = (/*tickMap*/ ctx[8]
+			? /*tickMap*/ ctx[8].get(/*tick*/ ctx[31].d)
+			: /*format*/ ctx[5](/*tick*/ ctx[31])) + "")) set_data(t, t_value);
+
+			if (dirty[0] & /*x1*/ 65536) {
+				attr(text_1, "x", /*x1*/ ctx[16]);
+			}
+
+			if (dirty[0] & /*d, $yScale*/ 1073750016 && text_1_y_value !== (text_1_y_value = /*tick*/ ctx[31].coord - /*tickValPx*/ ctx[32])) {
+				attr(text_1, "y", text_1_y_value);
+			}
+
+			if (dirty[0] & /*dx, labelPosition*/ 68 && text_1_dx_value !== (text_1_dx_value = /*dx*/ ctx[6] + (/*labelPosition*/ ctx[2] === 'even' ? -3 : 0))) {
+				attr(text_1, "dx", text_1_dx_value);
+			}
+
+			if (dirty[0] & /*labelPosition*/ 4 && text_1_text_anchor_value !== (text_1_text_anchor_value = /*labelPosition*/ ctx[2] === 'above' ? 'start' : 'end')) {
+				attr(text_1, "text-anchor", text_1_text_anchor_value);
+			}
+
+			if (dirty[0] & /*dy, labelPosition, snapBaselineLabel, $yScale, d, maxTickValPx*/ 1073766540 && text_1_dy_value !== (text_1_dy_value = /*dy*/ ctx[7] + (/*labelPosition*/ ctx[2] === 'above' || /*snapBaselineLabel*/ ctx[3] === true && /*tickValPx*/ ctx[32] === /*maxTickValPx*/ ctx[14]
+			? -3
+			: 4))) {
+				attr(text_1, "dy", text_1_dy_value);
+			}
+		},
+		d(detaching) {
+			if (detaching) {
+				detach(text_1);
+			}
+		}
+	};
+}
+
+// (101:2) {#each d as tick,i (tick)}
+function create_each_block$1(key_1, ctx) {
+	let g;
+	let if_block0_anchor;
+	let if_block1_anchor;
+	let g_class_value;
+	let g_transform_value;
+	let if_block0 = /*gridlines*/ ctx[4] === true && create_if_block_2(ctx);
+	let if_block1 = /*tickMarks*/ ctx[0] === true && create_if_block_1(ctx);
+	let if_block2 = /*tickLabel*/ ctx[1] === true && create_if_block$1(ctx);
+
+	return {
+		key: key_1,
+		first: null,
+		c() {
+			g = svg_element("g");
+			if (if_block0) if_block0.c();
+			if_block0_anchor = empty();
+			if (if_block1) if_block1.c();
+			if_block1_anchor = empty();
+			if (if_block2) if_block2.c();
+			this.h();
+		},
+		l(nodes) {
+			g = claim_svg_element(nodes, "g", { class: true, transform: true });
+			var g_nodes = children(g);
+			if (if_block0) if_block0.l(g_nodes);
+			if_block0_anchor = empty();
+			if (if_block1) if_block1.l(g_nodes);
+			if_block1_anchor = empty();
+			if (if_block2) if_block2.l(g_nodes);
+			g_nodes.forEach(detach);
+			this.h();
+		},
+		h() {
+			attr(g, "class", g_class_value = "tick tick-" + /*tick*/ ctx[31] + " svelte-sm4avn");
+			attr(g, "transform", g_transform_value = "translate(" + /*$xRange*/ ctx[17][0] + ", " + /*tickValPx*/ ctx[32] + ")");
+			this.first = g;
+		},
+		m(target, anchor) {
+			insert_hydration(target, g, anchor);
+			if (if_block0) if_block0.m(g, null);
+			append_hydration(g, if_block0_anchor);
+			if (if_block1) if_block1.m(g, null);
+			append_hydration(g, if_block1_anchor);
+			if (if_block2) if_block2.m(g, null);
+		},
+		p(new_ctx, dirty) {
+			ctx = new_ctx;
+
+			if (/*gridlines*/ ctx[4] === true) {
+				if (if_block0) {
+					if_block0.p(ctx, dirty);
+				} else {
+					if_block0 = create_if_block_2(ctx);
+					if_block0.c();
+					if_block0.m(g, if_block0_anchor);
+				}
+			} else if (if_block0) {
+				if_block0.d(1);
+				if_block0 = null;
+			}
+
+			if (/*tickMarks*/ ctx[0] === true) {
+				if (if_block1) {
+					if_block1.p(ctx, dirty);
+				} else {
+					if_block1 = create_if_block_1(ctx);
+					if_block1.c();
+					if_block1.m(g, if_block1_anchor);
+				}
+			} else if (if_block1) {
+				if_block1.d(1);
+				if_block1 = null;
+			}
+
+			if (/*tickLabel*/ ctx[1] === true) {
+				if (if_block2) {
+					if_block2.p(ctx, dirty);
+				} else {
+					if_block2 = create_if_block$1(ctx);
+					if_block2.c();
+					if_block2.m(g, null);
+				}
+			} else if (if_block2) {
+				if_block2.d(1);
+				if_block2 = null;
+			}
+
+			if (dirty[0] & /*d*/ 1073741824 && g_class_value !== (g_class_value = "tick tick-" + /*tick*/ ctx[31] + " svelte-sm4avn")) {
+				attr(g, "class", g_class_value);
+			}
+
+			if (dirty[0] & /*$xRange, $yScale, d*/ 1073881088 && g_transform_value !== (g_transform_value = "translate(" + /*$xRange*/ ctx[17][0] + ", " + /*tickValPx*/ ctx[32] + ")")) {
+				attr(g, "transform", g_transform_value);
+			}
+		},
+		d(detaching) {
+			if (detaching) {
+				detach(g);
+			}
+
+			if (if_block0) if_block0.d();
+			if (if_block1) if_block1.d();
+			if (if_block2) if_block2.d();
+		}
+	};
+}
+
+// (99:0) <Dodger stack = {tickVals} let:d {offSet}  >
+function create_default_slot$1(ctx) {
+	let each_blocks = [];
+	let each_1_lookup = new Map();
+	let each_1_anchor;
+	let each_value = ensure_array_like(/*d*/ ctx[30]);
+	const get_key = ctx => /*tick*/ ctx[31];
+
+	for (let i = 0; i < each_value.length; i += 1) {
+		let child_ctx = get_each_context$1(ctx, each_value, i);
+		let key = get_key(child_ctx);
+		each_1_lookup.set(key, each_blocks[i] = create_each_block$1(key, child_ctx));
+	}
+
+	return {
+		c() {
+			for (let i = 0; i < each_blocks.length; i += 1) {
+				each_blocks[i].c();
+			}
+
+			each_1_anchor = empty();
+		},
+		l(nodes) {
+			for (let i = 0; i < each_blocks.length; i += 1) {
+				each_blocks[i].l(nodes);
+			}
+
+			each_1_anchor = empty();
+		},
+		m(target, anchor) {
+			for (let i = 0; i < each_blocks.length; i += 1) {
+				if (each_blocks[i]) {
+					each_blocks[i].m(target, anchor);
+				}
+			}
+
+			insert_hydration(target, each_1_anchor, anchor);
+		},
+		p(ctx, dirty) {
+			if (dirty[0] & /*d, $xRange, $yScale, x1, dx, labelPosition, dy, snapBaselineLabel, maxTickValPx, tickMap, format, tickLabel, tickLen, y, tickMarks, $width, gridlines*/ 1074262527) {
+				each_value = ensure_array_like(/*d*/ ctx[30]);
+				each_blocks = update_keyed_each(each_blocks, dirty, get_key, 1, ctx, each_value, each_1_lookup, each_1_anchor.parentNode, destroy_block, create_each_block$1, each_1_anchor, get_each_context$1);
+			}
+		},
+		d(detaching) {
+			if (detaching) {
+				detach(each_1_anchor);
+			}
+
+			for (let i = 0; i < each_blocks.length; i += 1) {
+				each_blocks[i].d(detaching);
+			}
+		}
+	};
+}
+
+function create_fragment$1(ctx) {
+	let g;
+	let if_block_anchor;
+	let dodger;
+	let current;
+	let if_block = /*axisLine*/ ctx[9] && create_if_block_3(ctx);
+
+	dodger = new Dodger({
+			props: {
+				stack: /*tickVals*/ ctx[11],
+				offSet: /*offSet*/ ctx[10],
+				$$slots: {
+					default: [
+						create_default_slot$1,
+						({ d }) => ({ 30: d }),
+						({ d }) => [d ? 1073741824 : 0]
+					]
+				},
+				$$scope: { ctx }
+			}
+		});
+
+	return {
+		c() {
+			g = svg_element("g");
+			if (if_block) if_block.c();
+			if_block_anchor = empty();
+			create_component(dodger.$$.fragment);
+			this.h();
+		},
+		l(nodes) {
+			g = claim_svg_element(nodes, "g", { class: true });
+			var g_nodes = children(g);
+			if (if_block) if_block.l(g_nodes);
+			if_block_anchor = empty();
+			claim_component(dodger.$$.fragment, g_nodes);
+			g_nodes.forEach(detach);
+			this.h();
+		},
+		h() {
+			attr(g, "class", "axis y-axis");
+		},
+		m(target, anchor) {
+			insert_hydration(target, g, anchor);
+			if (if_block) if_block.m(g, null);
+			append_hydration(g, if_block_anchor);
+			mount_component(dodger, g, null);
+			current = true;
+		},
+		p(ctx, dirty) {
+			if (/*axisLine*/ ctx[9]) {
+				if (if_block) {
+					if_block.p(ctx, dirty);
+				} else {
+					if_block = create_if_block_3(ctx);
+					if_block.c();
+					if_block.m(g, if_block_anchor);
+				}
+			} else if (if_block) {
+				if_block.d(1);
+				if_block = null;
+			}
+
+			const dodger_changes = {};
+			if (dirty[0] & /*tickVals*/ 2048) dodger_changes.stack = /*tickVals*/ ctx[11];
+			if (dirty[0] & /*offSet*/ 1024) dodger_changes.offSet = /*offSet*/ ctx[10];
+
+			if (dirty[0] & /*d, $xRange, $yScale, x1, dx, labelPosition, dy, snapBaselineLabel, maxTickValPx, tickMap, format, tickLabel, tickLen, y, tickMarks, $width, gridlines*/ 1074262527 | dirty[1] & /*$$scope*/ 16) {
+				dodger_changes.$$scope = { dirty, ctx };
+			}
+
+			dodger.$set(dodger_changes);
+		},
+		i(local) {
+			if (current) return;
+			transition_in(dodger.$$.fragment, local);
+			current = true;
+		},
+		o(local) {
+			transition_out(dodger.$$.fragment, local);
+			current = false;
+		},
+		d(detaching) {
+			if (detaching) {
+				detach(g);
+			}
+
+			if (if_block) if_block.d();
+			destroy_component(dodger);
+		}
+	};
+}
+
+function instance$1($$self, $$props, $$invalidate) {
+	let isBandwidth;
+	let tickVals;
+	let tickLen;
+	let widestTickLen;
+	let x1;
+	let y;
+	let maxTickValPx;
+	let $yScale;
+	let $xRange;
+	let $width;
+	const { xRange, yRange, yScale, width } = getContext('LayerCake');
+	component_subscribe($$self, xRange, value => $$invalidate(17, $xRange = value));
+	component_subscribe($$self, yScale, value => $$invalidate(13, $yScale = value));
+	component_subscribe($$self, width, value => $$invalidate(18, $width = value));
+	let { tickMarks = false } = $$props;
+	let { tickLabel = false } = $$props;
+	let { labelPosition = 'even' } = $$props;
+	let { snapBaselineLabel = false } = $$props;
+	let { gridlines = true } = $$props;
+	let { tickMarkLength = undefined } = $$props;
+	let { format = d => d } = $$props;
+	let { ticks = 4 } = $$props;
+	let { tickGutter = 0 } = $$props;
+	let { dx = 0 } = $$props;
+	let { dy = 0 } = $$props;
+	let { charPixelWidth = 7.25 } = $$props;
+	let { tickMap = [] } = $$props;
+	let { axisLine } = $$props;
+	let { offSet = 0 } = $$props;
+
+	function calcStringLength(sum, val) {
+		if (val === ',' || val === '.') return sum + charPixelWidth * 0.5;
+		return sum + charPixelWidth;
+	}
+
+	$$self.$$set = $$props => {
+		if ('tickMarks' in $$props) $$invalidate(0, tickMarks = $$props.tickMarks);
+		if ('tickLabel' in $$props) $$invalidate(1, tickLabel = $$props.tickLabel);
+		if ('labelPosition' in $$props) $$invalidate(2, labelPosition = $$props.labelPosition);
+		if ('snapBaselineLabel' in $$props) $$invalidate(3, snapBaselineLabel = $$props.snapBaselineLabel);
+		if ('gridlines' in $$props) $$invalidate(4, gridlines = $$props.gridlines);
+		if ('tickMarkLength' in $$props) $$invalidate(22, tickMarkLength = $$props.tickMarkLength);
+		if ('format' in $$props) $$invalidate(5, format = $$props.format);
+		if ('ticks' in $$props) $$invalidate(23, ticks = $$props.ticks);
+		if ('tickGutter' in $$props) $$invalidate(24, tickGutter = $$props.tickGutter);
+		if ('dx' in $$props) $$invalidate(6, dx = $$props.dx);
+		if ('dy' in $$props) $$invalidate(7, dy = $$props.dy);
+		if ('charPixelWidth' in $$props) $$invalidate(25, charPixelWidth = $$props.charPixelWidth);
+		if ('tickMap' in $$props) $$invalidate(8, tickMap = $$props.tickMap);
+		if ('axisLine' in $$props) $$invalidate(9, axisLine = $$props.axisLine);
+		if ('offSet' in $$props) $$invalidate(10, offSet = $$props.offSet);
+	};
+
+	$$self.$$.update = () => {
+		if ($$self.$$.dirty[0] & /*$yScale*/ 8192) {
+			$$invalidate(26, isBandwidth = typeof $yScale.bandwidth === 'function');
+		}
+
+		if ($$self.$$.dirty[0] & /*ticks, isBandwidth, $yScale*/ 75505664) {
+			$$invalidate(11, tickVals = Array.isArray(ticks)
+			? ticks
+			: isBandwidth
+				? $yScale.domain()
+				: typeof ticks === 'function'
+					? ticks($yScale.ticks())
+					: $yScale.ticks(ticks));
+		}
+
+		if ($$self.$$.dirty[0] & /*tickVals, format*/ 2080) {
+			$$invalidate(27, widestTickLen = Math.max(10, Math.max(...tickVals.map(d => format(d).toString().split('').reduce(calcStringLength, 0)))));
+		}
+
+		if ($$self.$$.dirty[0] & /*tickMarks, labelPosition, tickMarkLength, widestTickLen*/ 138412037) {
+			$$invalidate(12, tickLen = tickMarks === true
+			? labelPosition === 'above'
+				? tickMarkLength ?? widestTickLen
+				: tickMarkLength ?? 6
+			: 0);
+		}
+
+		if ($$self.$$.dirty[0] & /*tickGutter, labelPosition, widestTickLen, tickLen*/ 150999044) {
+			$$invalidate(16, x1 = -tickGutter - (labelPosition === 'above' ? widestTickLen : tickLen));
+		}
+
+		if ($$self.$$.dirty[0] & /*isBandwidth, $yScale*/ 67117056) {
+			$$invalidate(15, y = isBandwidth ? $yScale.bandwidth() / 2 : 0);
+		}
+
+		if ($$self.$$.dirty[0] & /*tickVals, $yScale*/ 10240) {
+			$$invalidate(14, maxTickValPx = Math.max(...tickVals.map($yScale)));
+		}
+	};
+
+	return [
+		tickMarks,
+		tickLabel,
+		labelPosition,
+		snapBaselineLabel,
+		gridlines,
+		format,
+		dx,
+		dy,
+		tickMap,
+		axisLine,
+		offSet,
+		tickVals,
+		tickLen,
+		$yScale,
+		maxTickValPx,
+		y,
+		x1,
+		$xRange,
+		$width,
+		xRange,
+		yScale,
+		width,
+		tickMarkLength,
+		ticks,
+		tickGutter,
+		charPixelWidth,
+		isBandwidth,
+		widestTickLen
+	];
+}
+
+class AxisY extends SvelteComponent {
+	constructor(options) {
+		super();
+
+		init(
+			this,
+			options,
+			instance$1,
+			create_fragment$1,
+			safe_not_equal,
+			{
+				tickMarks: 0,
+				tickLabel: 1,
+				labelPosition: 2,
+				snapBaselineLabel: 3,
+				gridlines: 4,
+				tickMarkLength: 22,
+				format: 5,
+				ticks: 23,
+				tickGutter: 24,
+				dx: 6,
+				dy: 7,
+				charPixelWidth: 25,
+				tickMap: 8,
+				axisLine: 9,
+				offSet: 10
+			},
+			add_css$1,
+			[-1, -1]
+		);
+	}
+}
+
+/* src/routes/seqplot/stream/TrajectoryPlot.svelte generated by Svelte v4.2.9 */
+
+function add_css(target) {
+	append_styles(target, "svelte-189u5o0", ".chart-container.svelte-189u5o0{position:relative;float:left;width:100%;height:100%}");
+}
+
+function get_each_context(ctx, list, i) {
+	const child_ctx = ctx.slice();
+	child_ctx[24] = list[i];
+	child_ctx[26] = i;
+	return child_ctx;
+}
+
+function get_each_context_1(ctx, list, i) {
+	const child_ctx = ctx.slice();
+	child_ctx[24] = list[i];
+	return child_ctx;
+}
+
+// (135:6) {#each data as row }
+function create_each_block_1(ctx) {
+	let curve;
+	let current;
+
+	curve = new Curve_canvas({
+			props: {
+				row: /*y*/ ctx[22](/*row*/ ctx[24]),
+				strokeStyle: /*groupKey*/ ctx[5]
+				? /*zScale*/ ctx[23](/*row*/ ctx[24][/*groupKey*/ ctx[5]])
+				: /*strokeStyle*/ ctx[6],
+				alpha: /*alpha*/ ctx[7] ?? 1
+			}
+		});
+
+	return {
+		c() {
+			create_component(curve.$$.fragment);
+		},
+		l(nodes) {
+			claim_component(curve.$$.fragment, nodes);
+		},
+		m(target, anchor) {
+			mount_component(curve, target, anchor);
+			current = true;
+		},
+		p(ctx, dirty) {
+			const curve_changes = {};
+			if (dirty & /*y, data*/ 4195328) curve_changes.row = /*y*/ ctx[22](/*row*/ ctx[24]);
+
+			if (dirty & /*groupKey, zScale, data, strokeStyle*/ 8389728) curve_changes.strokeStyle = /*groupKey*/ ctx[5]
+			? /*zScale*/ ctx[23](/*row*/ ctx[24][/*groupKey*/ ctx[5]])
+			: /*strokeStyle*/ ctx[6];
+
+			if (dirty & /*alpha*/ 128) curve_changes.alpha = /*alpha*/ ctx[7] ?? 1;
+			curve.$set(curve_changes);
+		},
+		i(local) {
+			if (current) return;
+			transition_in(curve.$$.fragment, local);
+			current = true;
+		},
+		o(local) {
+			transition_out(curve.$$.fragment, local);
+			current = false;
+		},
+		d(detaching) {
+			destroy_component(curve, detaching);
+		}
+	};
+}
+
+// (140:8) {#if i % 2 == 0}
+function create_if_block(ctx) {
+	let curve;
+	let current;
+
+	curve = new Curve_canvas({
+			props: {
+				row: /*y*/ ctx[22](/*dataArea*/ ctx[1][/*i*/ ctx[26]]).concat(/*y*/ ctx[22](/*dataArea*/ ctx[1][/*i*/ ctx[26] + 1]).reverse()),
+				closed: true,
+				strokeStyle: /*groupKey*/ ctx[5]
+				? /*zScale*/ ctx[23](/*row*/ ctx[24][/*groupKey*/ ctx[5]])
+				: /*strokeStyle*/ ctx[6],
+				fillStyle: /*groupKey*/ ctx[5]
+				? /*zScale*/ ctx[23](/*row*/ ctx[24][/*groupKey*/ ctx[5]])
+				: /*strokeStyle*/ ctx[6],
+				alpha: /*alpha*/ ctx[7] ?? 1
+			}
+		});
+
+	return {
+		c() {
+			create_component(curve.$$.fragment);
+		},
+		l(nodes) {
+			claim_component(curve.$$.fragment, nodes);
+		},
+		m(target, anchor) {
+			mount_component(curve, target, anchor);
+			current = true;
+		},
+		p(ctx, dirty) {
+			const curve_changes = {};
+			if (dirty & /*y, dataArea*/ 4194306) curve_changes.row = /*y*/ ctx[22](/*dataArea*/ ctx[1][/*i*/ ctx[26]]).concat(/*y*/ ctx[22](/*dataArea*/ ctx[1][/*i*/ ctx[26] + 1]).reverse());
+
+			if (dirty & /*groupKey, zScale, dataArea, strokeStyle*/ 8388706) curve_changes.strokeStyle = /*groupKey*/ ctx[5]
+			? /*zScale*/ ctx[23](/*row*/ ctx[24][/*groupKey*/ ctx[5]])
+			: /*strokeStyle*/ ctx[6];
+
+			if (dirty & /*groupKey, zScale, dataArea, strokeStyle*/ 8388706) curve_changes.fillStyle = /*groupKey*/ ctx[5]
+			? /*zScale*/ ctx[23](/*row*/ ctx[24][/*groupKey*/ ctx[5]])
+			: /*strokeStyle*/ ctx[6];
+
+			if (dirty & /*alpha*/ 128) curve_changes.alpha = /*alpha*/ ctx[7] ?? 1;
+			curve.$set(curve_changes);
+		},
+		i(local) {
+			if (current) return;
+			transition_in(curve.$$.fragment, local);
+			current = true;
+		},
+		o(local) {
+			transition_out(curve.$$.fragment, local);
+			current = false;
+		},
+		d(detaching) {
+			destroy_component(curve, detaching);
+		}
+	};
+}
+
+// (139:6) {#each dataArea as row,i }
+function create_each_block(ctx) {
+	let if_block_anchor;
+	let current;
+	let if_block = /*i*/ ctx[26] % 2 == 0 && create_if_block(ctx);
+
+	return {
+		c() {
+			if (if_block) if_block.c();
+			if_block_anchor = empty();
+		},
+		l(nodes) {
+			if (if_block) if_block.l(nodes);
+			if_block_anchor = empty();
+		},
+		m(target, anchor) {
+			if (if_block) if_block.m(target, anchor);
+			insert_hydration(target, if_block_anchor, anchor);
+			current = true;
+		},
+		p(ctx, dirty) {
+			if (/*i*/ ctx[26] % 2 == 0) if_block.p(ctx, dirty);
+		},
+		i(local) {
+			if (current) return;
+			transition_in(if_block);
+			current = true;
+		},
+		o(local) {
+			transition_out(if_block);
+			current = false;
+		},
+		d(detaching) {
+			if (detaching) {
+				detach(if_block_anchor);
+			}
+
+			if (if_block) if_block.d(detaching);
+		}
+	};
+}
+
+// (133:4) <CanvasController {innerPadding} >
+function create_default_slot_3(ctx) {
+	let t;
+	let each1_anchor;
+	let current;
+	let each_value_1 = ensure_array_like(/*data*/ ctx[10]);
+	let each_blocks_1 = [];
+
+	for (let i = 0; i < each_value_1.length; i += 1) {
+		each_blocks_1[i] = create_each_block_1(get_each_context_1(ctx, each_value_1, i));
+	}
+
+	const out = i => transition_out(each_blocks_1[i], 1, 1, () => {
+		each_blocks_1[i] = null;
+	});
+
+	let each_value = ensure_array_like(/*dataArea*/ ctx[1]);
+	let each_blocks = [];
+
+	for (let i = 0; i < each_value.length; i += 1) {
+		each_blocks[i] = create_each_block(get_each_context(ctx, each_value, i));
+	}
+
+	const out_1 = i => transition_out(each_blocks[i], 1, 1, () => {
+		each_blocks[i] = null;
+	});
+
+	return {
+		c() {
+			for (let i = 0; i < each_blocks_1.length; i += 1) {
+				each_blocks_1[i].c();
+			}
+
+			t = space();
+
+			for (let i = 0; i < each_blocks.length; i += 1) {
+				each_blocks[i].c();
+			}
+
+			each1_anchor = empty();
+		},
+		l(nodes) {
+			for (let i = 0; i < each_blocks_1.length; i += 1) {
+				each_blocks_1[i].l(nodes);
+			}
+
+			t = claim_space(nodes);
+
+			for (let i = 0; i < each_blocks.length; i += 1) {
+				each_blocks[i].l(nodes);
+			}
+
+			each1_anchor = empty();
+		},
+		m(target, anchor) {
+			for (let i = 0; i < each_blocks_1.length; i += 1) {
+				if (each_blocks_1[i]) {
+					each_blocks_1[i].m(target, anchor);
+				}
+			}
+
+			insert_hydration(target, t, anchor);
+
+			for (let i = 0; i < each_blocks.length; i += 1) {
+				if (each_blocks[i]) {
+					each_blocks[i].m(target, anchor);
+				}
+			}
+
+			insert_hydration(target, each1_anchor, anchor);
+			current = true;
+		},
+		p(ctx, dirty) {
+			if (dirty & /*y, data, groupKey, zScale, strokeStyle, alpha*/ 12584160) {
+				each_value_1 = ensure_array_like(/*data*/ ctx[10]);
+				let i;
+
+				for (i = 0; i < each_value_1.length; i += 1) {
+					const child_ctx = get_each_context_1(ctx, each_value_1, i);
+
+					if (each_blocks_1[i]) {
+						each_blocks_1[i].p(child_ctx, dirty);
+						transition_in(each_blocks_1[i], 1);
+					} else {
+						each_blocks_1[i] = create_each_block_1(child_ctx);
+						each_blocks_1[i].c();
+						transition_in(each_blocks_1[i], 1);
+						each_blocks_1[i].m(t.parentNode, t);
+					}
+				}
+
+				group_outros();
+
+				for (i = each_value_1.length; i < each_blocks_1.length; i += 1) {
+					out(i);
+				}
+
+				check_outros();
+			}
+
+			if (dirty & /*y, dataArea, groupKey, zScale, strokeStyle, alpha*/ 12583138) {
+				each_value = ensure_array_like(/*dataArea*/ ctx[1]);
+				let i;
+
+				for (i = 0; i < each_value.length; i += 1) {
+					const child_ctx = get_each_context(ctx, each_value, i);
+
+					if (each_blocks[i]) {
+						each_blocks[i].p(child_ctx, dirty);
+						transition_in(each_blocks[i], 1);
+					} else {
+						each_blocks[i] = create_each_block(child_ctx);
+						each_blocks[i].c();
+						transition_in(each_blocks[i], 1);
+						each_blocks[i].m(each1_anchor.parentNode, each1_anchor);
+					}
+				}
+
+				group_outros();
+
+				for (i = each_value.length; i < each_blocks.length; i += 1) {
+					out_1(i);
+				}
+
+				check_outros();
+			}
+		},
+		i(local) {
+			if (current) return;
+
+			for (let i = 0; i < each_value_1.length; i += 1) {
+				transition_in(each_blocks_1[i]);
+			}
+
+			for (let i = 0; i < each_value.length; i += 1) {
+				transition_in(each_blocks[i]);
+			}
+
+			current = true;
+		},
+		o(local) {
+			each_blocks_1 = each_blocks_1.filter(Boolean);
+
+			for (let i = 0; i < each_blocks_1.length; i += 1) {
+				transition_out(each_blocks_1[i]);
+			}
+
+			each_blocks = each_blocks.filter(Boolean);
+
+			for (let i = 0; i < each_blocks.length; i += 1) {
+				transition_out(each_blocks[i]);
+			}
+
+			current = false;
+		},
+		d(detaching) {
+			if (detaching) {
+				detach(t);
+				detach(each1_anchor);
+			}
+
+			destroy_each(each_blocks_1, detaching);
+			destroy_each(each_blocks, detaching);
+		}
+	};
+}
+
+// (132:2) <Canvas>
 function create_default_slot_2(ctx) {
 	let canvascontroller;
 	let current;
-	canvascontroller = new CanvasController({});
+
+	canvascontroller = new CanvasController({
+			props: {
+				innerPadding: /*innerPadding*/ ctx[8],
+				$$slots: { default: [create_default_slot_3] },
+				$$scope: { ctx }
+			}
+		});
 
 	return {
 		c() {
@@ -7686,6 +7910,16 @@ function create_default_slot_2(ctx) {
 		m(target, anchor) {
 			mount_component(canvascontroller, target, anchor);
 			current = true;
+		},
+		p(ctx, dirty) {
+			const canvascontroller_changes = {};
+			if (dirty & /*innerPadding*/ 256) canvascontroller_changes.innerPadding = /*innerPadding*/ ctx[8];
+
+			if (dirty & /*$$scope, dataArea, y, groupKey, zScale, strokeStyle, alpha, data*/ 549455074) {
+				canvascontroller_changes.$$scope = { dirty, ctx };
+			}
+
+			canvascontroller.$set(canvascontroller_changes);
 		},
 		i(local) {
 			if (current) return;
@@ -7702,7 +7936,7 @@ function create_default_slot_2(ctx) {
 	};
 }
 
-// (234:2) <Svg>
+// (149:2) <Svg>
 function create_default_slot_1(ctx) {
 	let axisy0;
 	let t0;
@@ -7714,11 +7948,10 @@ function create_default_slot_1(ctx) {
 	axisy0 = new AxisY({
 			props: {
 				tickMarks: true,
-				snapLabels: true,
 				gridlines: true,
 				tickMarkLength: 20,
 				tickGutter: 3,
-				ticks: [0].concat(/*catSpan*/ ctx[2].map(func)),
+				ticks: [0].concat(/*gridLayout*/ ctx[3].map(func)),
 				axisLine: true
 			}
 		});
@@ -7732,13 +7965,17 @@ function create_default_slot_1(ctx) {
 				tickMarkLength: 10,
 				tickGutter: 25,
 				tickLabel: true,
-				format: func_1,
-				ticks: /*catSpan*/ ctx[2].map(func_2),
-				tickMap: new Map(/*catSpan*/ ctx[2].map(func_3))
+				ticks: /*gridLayout*/ ctx[3].map(func_1),
+				tickMap: new Map(/*gridLayout*/ ctx[3].map(/*func_2*/ ctx[20]))
 			}
 		});
 
-	axisx = new AxisX({});
+	axisx = new AxisX({
+			props: {
+				align: "left",
+				tickMap: new Map(/*xKey*/ ctx[0].map(func_3))
+			}
+		});
 
 	return {
 		c() {
@@ -7765,12 +8002,15 @@ function create_default_slot_1(ctx) {
 		},
 		p(ctx, dirty) {
 			const axisy0_changes = {};
-			if (dirty & /*catSpan*/ 4) axisy0_changes.ticks = [0].concat(/*catSpan*/ ctx[2].map(func));
+			if (dirty & /*gridLayout*/ 8) axisy0_changes.ticks = [0].concat(/*gridLayout*/ ctx[3].map(func));
 			axisy0.$set(axisy0_changes);
 			const axisy1_changes = {};
-			if (dirty & /*catSpan*/ 4) axisy1_changes.ticks = /*catSpan*/ ctx[2].map(func_2);
-			if (dirty & /*catSpan*/ 4) axisy1_changes.tickMap = new Map(/*catSpan*/ ctx[2].map(func_3));
+			if (dirty & /*gridLayout*/ 8) axisy1_changes.ticks = /*gridLayout*/ ctx[3].map(func_1);
+			if (dirty & /*gridLayout, labelsY*/ 12) axisy1_changes.tickMap = new Map(/*gridLayout*/ ctx[3].map(/*func_2*/ ctx[20]));
 			axisy1.$set(axisy1_changes);
+			const axisx_changes = {};
+			if (dirty & /*xKey*/ 1) axisx_changes.tickMap = new Map(/*xKey*/ ctx[0].map(func_3));
+			axisx.$set(axisx_changes);
 		},
 		i(local) {
 			if (current) return;
@@ -7798,7 +8038,7 @@ function create_default_slot_1(ctx) {
 	};
 }
 
-// (220:2) <LayerCake     padding={{ top: 20, right: 10, bottom: 20, left: 120 }}     data={$tweenedData}     y = {d => yKey.map(key => {return {x:d[key].time, y:d[key][yKeyType], state:d[key].state  }} ) }     yDomain={yDomain}     xScale={scaleBand()}     xDomain = {yKey}     zScale={scaleOrdinal()}     zDomain = {alphabet}     zRange = {colorMap}   >
+// (116:2) <LayerCake     padding={padding}     data={$tweenedData}     y = {d => xKey.map(key => ({x:key, y:d[key] }))}     yDomain={yDomain}     xScale={scaleBand()}     xDomain = {xKey}     zScale = {scaleOrdinal()}     z = {groupColorList[0]}     zRange = {groupColorList[1]}     let:data     let:y     let:zScale   >
 function create_default_slot(ctx) {
 	let canvas;
 	let t;
@@ -7839,14 +8079,14 @@ function create_default_slot(ctx) {
 		p(ctx, dirty) {
 			const canvas_changes = {};
 
-			if (dirty & /*$$scope*/ 8388608) {
+			if (dirty & /*$$scope, innerPadding, dataArea, y, groupKey, zScale, strokeStyle, alpha, data*/ 549455330) {
 				canvas_changes.$$scope = { dirty, ctx };
 			}
 
 			canvas.$set(canvas_changes);
 			const svg_changes = {};
 
-			if (dirty & /*$$scope, catSpan*/ 8388612) {
+			if (dirty & /*$$scope, xKey, gridLayout, labelsY*/ 536870925) {
 				svg_changes.$$scope = { dirty, ctx };
 			}
 
@@ -7881,21 +8121,22 @@ function create_fragment(ctx) {
 
 	layercake = new LayerCake({
 			props: {
-				padding: {
-					top: 20,
-					right: 10,
-					bottom: 20,
-					left: 120
-				},
-				data: /*$tweenedData*/ ctx[4],
-				y: /*func_4*/ ctx[15],
-				yDomain: /*yDomain*/ ctx[3],
+				padding: /*padding*/ ctx[9],
+				data: /*$tweenedData*/ ctx[12],
+				y: /*func_4*/ ctx[21],
+				yDomain: /*yDomain*/ ctx[11],
 				xScale: band(),
-				xDomain: /*yKey*/ ctx[0],
+				xDomain: /*xKey*/ ctx[0],
 				zScale: ordinal(),
-				zDomain: /*alphabet*/ ctx[1],
-				zRange: /*colorMap*/ ctx[5],
-				$$slots: { default: [create_default_slot] },
+				z: /*groupColorList*/ ctx[4][0],
+				zRange: /*groupColorList*/ ctx[4][1],
+				$$slots: {
+					default: [
+						create_default_slot,
+						({ data, y, zScale }) => ({ 10: data, 22: y, 23: zScale }),
+						({ data, y, zScale }) => (data ? 1024 : 0) | (y ? 4194304 : 0) | (zScale ? 8388608 : 0)
+					]
+				},
 				$$scope: { ctx }
 			}
 		});
@@ -7914,7 +8155,7 @@ function create_fragment(ctx) {
 			this.h();
 		},
 		h() {
-			attr(div, "class", "chart-container svelte-1rhinkp");
+			attr(div, "class", "chart-container svelte-189u5o0");
 		},
 		m(target, anchor) {
 			insert_hydration(target, div, anchor);
@@ -7923,13 +8164,15 @@ function create_fragment(ctx) {
 		},
 		p(ctx, [dirty]) {
 			const layercake_changes = {};
-			if (dirty & /*$tweenedData*/ 16) layercake_changes.data = /*$tweenedData*/ ctx[4];
-			if (dirty & /*yKey*/ 1) layercake_changes.y = /*func_4*/ ctx[15];
-			if (dirty & /*yDomain*/ 8) layercake_changes.yDomain = /*yDomain*/ ctx[3];
-			if (dirty & /*yKey*/ 1) layercake_changes.xDomain = /*yKey*/ ctx[0];
-			if (dirty & /*alphabet*/ 2) layercake_changes.zDomain = /*alphabet*/ ctx[1];
+			if (dirty & /*padding*/ 512) layercake_changes.padding = /*padding*/ ctx[9];
+			if (dirty & /*$tweenedData*/ 4096) layercake_changes.data = /*$tweenedData*/ ctx[12];
+			if (dirty & /*xKey*/ 1) layercake_changes.y = /*func_4*/ ctx[21];
+			if (dirty & /*yDomain*/ 2048) layercake_changes.yDomain = /*yDomain*/ ctx[11];
+			if (dirty & /*xKey*/ 1) layercake_changes.xDomain = /*xKey*/ ctx[0];
+			if (dirty & /*groupColorList*/ 16) layercake_changes.z = /*groupColorList*/ ctx[4][0];
+			if (dirty & /*groupColorList*/ 16) layercake_changes.zRange = /*groupColorList*/ ctx[4][1];
 
-			if (dirty & /*$$scope, catSpan*/ 8388612) {
+			if (dirty & /*$$scope, xKey, gridLayout, labelsY, innerPadding, dataArea, y, groupKey, zScale, strokeStyle, alpha, data*/ 549455343) {
 				layercake_changes.$$scope = { dirty, ctx };
 			}
 
@@ -7954,121 +8197,38 @@ function create_fragment(ctx) {
 	};
 }
 
-let yKeyType = "wide";
-const func = d => d[1];
-const func_1 = (d, i) => d;
-const func_2 = d => d[1] - d[2] * 0.5;
-const func_3 = d => [d[1] - d[2] * 0.5, d[3]];
+const func = d => d.upperBound;
+const func_1 = d => d.upperBound - d.max * 0.5;
+const func_3 = d => [d, d];
 
 function instance($$self, $$props, $$invalidate) {
 	let yDomainMax;
 	let yDomain;
 	let $tweenedData;
-	let { position } = $$props;
-	let { yKey = [] } = $$props;
+	let { xKey = [] } = $$props;
 	let { data = [] } = $$props;
-	let { alphabet = [] } = $$props;
-	let { cpal = [] } = $$props;
-	let { labels = [] } = $$props;
+	let { dataArea = [] } = $$props;
+	let { labelsY = {} } = $$props;
+	let { labelsX = {} } = $$props;
 	let { ids = [] } = $$props;
-	let { margins = [150, 0, 150, 50] } = $$props;
-
-	// giving the data an id
-	//general idea: stacked data layout in wide and dense
-	//pass in all x-y stuff
-	// give a count value, default: length
-	//return the catspan data and stack
-	data.forEach((d, i) => d.id = ids[i]);
-
-	let stateStack;
-	let newData;
-	let catSpan;
-	let catMap;
-	let positionScaler = position == 'top' ? 0 : position == "bottom" ? 1 : 0.5;
-
-	function prepareData(data) {
-		stateStack = yKey.reduce(
-			(map, key) => {
-				//count counts the occurences of each state for each time
-				let count = rollup(data, D => D.length, d => d[key]);
-
-				//include the count stuff as a fourth component
-				let baseLevel = new Map(stack().keys(alphabet)([Object.fromEntries(count)]).map(d => [d.key, { val: d[0][0] }]));
-
-				map.set(key, [baseLevel, count]);
-				return map;
-			},
-			new Map()
-		);
-
-		//ich habe als base level den max value für jedes ding generiert
-		// von diesem base level geht es hinab
-		//
-		//calculate the max value for each state over all time points
-		let maxState = alphabet.map(state => max([...stateStack.values()].map(d => d[1].get(state)))).reduce(
-			(acc, cur, i) => acc.concat([
-				{
-					stacked: acc[i].stacked + cur,
-					count: cur
-				}
-			]),
-			[{ stacked: 0, count: 0 }]
-		);
-
-		$$invalidate(2, catSpan = alphabet.map((d, i) => [d, maxState[i + 1].stacked, maxState[i + 1].count, labels[i]]));
-		catMap = new Map(yKey.map(t => [t, new Map(catSpan.map(d => [d[0], { stacked: d[1], unstacked: d[2] }]))]));
-
-		$$invalidate(13, newData = data.map((obj, i) => {
-			obj.index = i;
-			let d = { ...obj };
-
-			yKey.map(key => d[key] = {
-				state: d[key],
-				dense: stateStack.get(key)[0].get(d[key]).stacked++,
-				time: key,
-				wide: catMap.get(key).get(d[key]).stacked-- - (catMap.get(key).get(d[key]).unstacked - stateStack.get(key)[1].get(d[key])) * positionScaler
-			});
-
-			return d;
-		}));
-	}
-
-	prepareData(data);
-
-	//check difference
-	// catMap: creates a new Map, with each state as entry;
-	// this map contains a map with the max value in each state
-	// what I need to find is the actual value
-	const colorMap = [
-		"#e41a1c",
-		"#377eb8",
-		"#4daf4a",
-		"#984ea3",
-		"#ff7f00",
-		"#ffff33",
-		"#a65628",
-		"#f781bf"
-	];
-	let sortOrder;
+	let { margins = [0, 0, 0, 0] } = $$props;
+	let { gridLayout } = $$props;
+	let { yKeyPosition = "wideCenter" } = $$props;
+	let { groupColorList = [] } = $$props;
+	let { groupKey } = $$props;
+	let { strokeStyle = 'rgb(0,0,0)' } = $$props;
+	let { fillStyle = 'rgb(0,0,0)' } = $$props;
+	let { alpha = 1 } = $$props;
+	let { innerPadding = [0, 0, 0, 0] } = $$props;
+	let { padding = { left: 0, top: 0, right: 0, bottom: 0 } } = $$props;
 
 	//tween entry one after the other ....
-	const tweenedData = tweened(newData, {
+	const tweenedData = tweened(data, {
 		duration: 1000,
 		interpolate: (a, b) => t => {
-			//hier wird essentiel die ordnung ignoriert
-			//irgendwie muss im sort befehl eine map gemacht werden, wo die positoion im array dem entspricht
-			//wo der dings im alten array war und die number angibt, wo er nun im neuen array zu finden ist
-			//idee: pack ein index in a, sorte a,
-			//loope dann über b,
-			//identifiziere a durch den index, update dann den index von b
 			a.map((d, i) => {
-				//hier muss man nun irgendwie diese indexOf sache integrieren
-				yKey.forEach(key => {
-					//hmmmm hm hm wie war das dhier ... a und b sind wieder sortiert
-					// aber ich gehe nicht mehr über den index sondern über die id
-					// die id ist gegeben im sortOrder array
+				xKey.forEach(key => {
 					let aData = d[key];
-
 					let bData = b[sortOrder.indexOf(d.id)][key];
 					aData.wide = aData.wide + (bData.wide - aData.wide) * t;
 				});
@@ -8078,58 +8238,70 @@ function instance($$self, $$props, $$invalidate) {
 		}
 	});
 
-	component_subscribe($$self, tweenedData, value => $$invalidate(4, $tweenedData = value));
-
-	const func_4 = d => yKey.map(key => {
-		return {
-			x: d[key].time,
-			y: d[key][yKeyType],
-			state: d[key].state
-		};
-	});
+	component_subscribe($$self, tweenedData, value => $$invalidate(12, $tweenedData = value));
+	const func_2 = (d, i) => [d.upperBound - d.max * 0.5, labelsY[i]];
+	const func_4 = d => xKey.map(key => ({ x: key, y: d[key] }));
 
 	$$self.$$set = $$props => {
-		if ('position' in $$props) $$invalidate(7, position = $$props.position);
-		if ('yKey' in $$props) $$invalidate(0, yKey = $$props.yKey);
-		if ('data' in $$props) $$invalidate(8, data = $$props.data);
-		if ('alphabet' in $$props) $$invalidate(1, alphabet = $$props.alphabet);
-		if ('cpal' in $$props) $$invalidate(9, cpal = $$props.cpal);
-		if ('labels' in $$props) $$invalidate(10, labels = $$props.labels);
-		if ('ids' in $$props) $$invalidate(11, ids = $$props.ids);
-		if ('margins' in $$props) $$invalidate(12, margins = $$props.margins);
+		if ('xKey' in $$props) $$invalidate(0, xKey = $$props.xKey);
+		if ('data' in $$props) $$invalidate(10, data = $$props.data);
+		if ('dataArea' in $$props) $$invalidate(1, dataArea = $$props.dataArea);
+		if ('labelsY' in $$props) $$invalidate(2, labelsY = $$props.labelsY);
+		if ('labelsX' in $$props) $$invalidate(14, labelsX = $$props.labelsX);
+		if ('ids' in $$props) $$invalidate(15, ids = $$props.ids);
+		if ('margins' in $$props) $$invalidate(16, margins = $$props.margins);
+		if ('gridLayout' in $$props) $$invalidate(3, gridLayout = $$props.gridLayout);
+		if ('yKeyPosition' in $$props) $$invalidate(17, yKeyPosition = $$props.yKeyPosition);
+		if ('groupColorList' in $$props) $$invalidate(4, groupColorList = $$props.groupColorList);
+		if ('groupKey' in $$props) $$invalidate(5, groupKey = $$props.groupKey);
+		if ('strokeStyle' in $$props) $$invalidate(6, strokeStyle = $$props.strokeStyle);
+		if ('fillStyle' in $$props) $$invalidate(18, fillStyle = $$props.fillStyle);
+		if ('alpha' in $$props) $$invalidate(7, alpha = $$props.alpha);
+		if ('innerPadding' in $$props) $$invalidate(8, innerPadding = $$props.innerPadding);
+		if ('padding' in $$props) $$invalidate(9, padding = $$props.padding);
 	};
 
 	$$self.$$.update = () => {
-		if ($$self.$$.dirty & /*newData, yKey*/ 8193) {
-			$$invalidate(14, yDomainMax = max(newData.map(d => yKey.map(key => d[key][yKeyType])).flat()));
+		if ($$self.$$.dirty & /*gridLayout*/ 8) {
+			//todo: replace tick maps by an array not map
+			//adding an id -> add if condition
+			//data.forEach( (d,i) => d.id = ids[i])
+			// yDomainMax gets the extent for the data domain based on newData -> change to the stackk
+			$$invalidate(19, yDomainMax = gridLayout[gridLayout.length - 1].upperBound);
 		}
 
-		if ($$self.$$.dirty & /*margins, yDomainMax*/ 20480) {
-			$$invalidate(3, yDomain = [-margins[2], yDomainMax + margins[0]]);
+		if ($$self.$$.dirty & /*yDomainMax*/ 524288) {
+			$$invalidate(11, yDomain = [0, yDomainMax]);
 		}
 	};
 
 	return [
-		yKey,
-		alphabet,
-		catSpan,
+		xKey,
+		dataArea,
+		labelsY,
+		gridLayout,
+		groupColorList,
+		groupKey,
+		strokeStyle,
+		alpha,
+		innerPadding,
+		padding,
+		data,
 		yDomain,
 		$tweenedData,
-		colorMap,
 		tweenedData,
-		position,
-		data,
-		cpal,
-		labels,
+		labelsX,
 		ids,
 		margins,
-		newData,
+		yKeyPosition,
+		fillStyle,
 		yDomainMax,
+		func_2,
 		func_4
 	];
 }
 
-class Stream extends SvelteComponent {
+class TrajectoryPlot extends SvelteComponent {
 	constructor(options) {
 		super();
 
@@ -8140,18 +8312,26 @@ class Stream extends SvelteComponent {
 			create_fragment,
 			safe_not_equal,
 			{
-				position: 7,
-				yKey: 0,
-				data: 8,
-				alphabet: 1,
-				cpal: 9,
-				labels: 10,
-				ids: 11,
-				margins: 12
+				xKey: 0,
+				data: 10,
+				dataArea: 1,
+				labelsY: 2,
+				labelsX: 14,
+				ids: 15,
+				margins: 16,
+				gridLayout: 3,
+				yKeyPosition: 17,
+				groupColorList: 4,
+				groupKey: 5,
+				strokeStyle: 6,
+				fillStyle: 18,
+				alpha: 7,
+				innerPadding: 8,
+				padding: 9
 			},
 			add_css
 		);
 	}
 }
 
-module.exports = Stream;
+module.exports = TrajectoryPlot;
