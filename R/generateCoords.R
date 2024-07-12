@@ -5,6 +5,7 @@ library("data.table")
 #' @param seqObj the sequence object
 #' @param layout layout computed with generateLayout()
 #' @return data.table object
+#' @export
 
 generateCoords <-  function(seqObj,layout ){
   

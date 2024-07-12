@@ -2,6 +2,7 @@
 #'
 #' @param seqObj the sequence object
 #' @return data.frame object
+#' @export
 
 
 

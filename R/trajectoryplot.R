@@ -13,12 +13,13 @@
 
 #' @param margins determines the plot's margin, starting with "top" and going clockwise: \code{c(top, right, bottom, left)}. Defaults to \code{c(20,20,20,20)}.
 #' @return trajectoryplot object
+#' @export
 
 ## ====================================================
 ## Generic function for plotting state sequence objects
 ## ====================================================
 
-#### interface copied from TramineR for consistency ###
+#### interface copied from TramineR for consistency and modified to enable the specific data functions 2024-07-12 ###
 
 trajectoryplot <- function(seqdata, alphabet = NULL, names = NULL, layout = NULL, ylab=NULL, yaxis = TRUE,
                   strokeStyle = 'rgb(255,0,0,0.1)',groupColor = NULL,  group = NULL, area = NULL,
